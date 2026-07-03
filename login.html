@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="fr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iziFacture - Facturation simple pour entrepreneurs africains</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- GSAP & Lucide Icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              display: ["Plus Jakarta Sans", "sans-serif"],
+            },
+            colors: {
+              primary: {
+                400: "#4ade80",
+                500: "#22c55e",
+                600: "#16a34a",
+                700: "#15803d",
+              },
+              dark: "#0f172a",
+              darker: "#020617",
+            },
+            boxShadow: {
+              glow: "0 0 20px rgba(22, 163, 74, 0.3)",
+              "glow-lg": "0 0 40px rgba(22, 163, 74, 0.2)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Custom CSS -->
+    <style>
+      body {
+        background-color: #f8fafc;
+        overflow-x: hidden;
+      }
+      .noise-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+      .glass-card-dark {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+      .text-gradient {
+        background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .reveal {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(30px);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body
+    class="text-slate-600 font-sans antialiased selection:bg-primary-500 selection:text-white"
+  >
+    <div class="noise-bg"></div>
+
+    <main class="min-h-screen flex w-full">
+      <!-- Left: Form -->
+      <div
+        class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-24 relative z-10"
+      >
+        <div class="w-full max-w-md reveal active">
+          <div
+            class="mb-10 flex items-center gap-2 cursor-pointer"
+            onclick="window.location.href = 'index.html'"
+          >
+            <div
+              class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-white shadow-glow"
+            >
+              <i data-lucide="zap" class="w-6 h-6"></i>
+            </div>
+            <span
+              class="font-display font-bold text-2xl text-slate-900 tracking-tight"
+              >iziFacture</span
+            >
+          </div>
+
+          <h1 class="text-3xl font-display font-bold text-slate-900 mb-2">
+            Bon retour ! 👋
+          </h1>
+          <p class="text-slate-500 mb-8">
+            Connectez-vous pour accéder à votre tableau de bord.
+          </p>
+
+          <button
+            class="w-full flex items-center justify-center gap-3 px-4 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors font-medium text-slate-700 mb-6 group"
+          >
+            <svg
+              class="w-5 h-5 group-hover:scale-110 transition-transform"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Continuer avec Google
+          </button>
+
+          <div class="relative flex items-center justify-center mb-6">
+            <div class="border-t border-slate-200 w-full absolute"></div>
+            <span
+              class="bg-[#f8fafc] px-4 text-xs font-medium text-slate-400 relative"
+              >ou avec votre email</span
+            >
+          </div>
+
+          <form
+            onsubmit="
+              event.preventDefault();
+              window.location.href = 'dashboard.html';
+            "
+            class="space-y-4"
+          >
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1"
+                >Adresse email</label
+              >
+              <input
+                type="email"
+                placeholder="nom@entreprise.com"
+                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-slate-400"
+                required
+              />
+            </div>
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="block text-sm font-medium text-slate-700"
+                  >Mot de passe</label
+                >
+                <a
+                  href="#"
+                  class="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                  >Mot de passe oublié ?</a
+                >
+              </div>
+              <input
+                type="password"
+                placeholder="••••••••"
+                class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-slate-400"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              class="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium transition-colors shadow-lg mt-6"
+            >
+              Se connecter
+            </button>
+          </form>
+
+          <p class="text-center text-sm text-slate-500 mt-8">
+            Pas encore de compte ?
+            <a
+              href="signup.html"
+              class="font-medium text-primary-600 hover:text-primary-700 transition-colors"
+              >S'inscrire gratuitement</a
+            >
+          </p>
+        </div>
+      </div>
+
+      <!-- Right: Visual -->
+      <div
+        class="hidden lg:flex w-1/2 bg-slate-900 relative overflow-hidden items-center justify-center p-12"
+      >
+        <div
+          class="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-transparent"
+        ></div>
+        <div
+          class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary-500/20 blur-[100px] rounded-full"
+        ></div>
+        <div
+          class="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full"
+        ></div>
+
+        <div
+          class="relative z-10 w-full max-w-lg glass-card-dark rounded-3xl p-10 text-white border border-white/10 shadow-2xl reveal active"
+        >
+          <div class="flex gap-1 mb-6">
+            <i
+              data-lucide="star"
+              class="w-5 h-5 fill-yellow-400 text-yellow-400"
+            ></i>
+            <i
+              data-lucide="star"
+              class="w-5 h-5 fill-yellow-400 text-yellow-400"
+            ></i>
+            <i
+              data-lucide="star"
+              class="w-5 h-5 fill-yellow-400 text-yellow-400"
+            ></i>
+            <i
+              data-lucide="star"
+              class="w-5 h-5 fill-yellow-400 text-yellow-400"
+            ></i>
+            <i
+              data-lucide="star"
+              class="w-5 h-5 fill-yellow-400 text-yellow-400"
+            ></i>
+          </div>
+          <p class="text-2xl font-display font-medium leading-relaxed mb-8">
+            "iziFacture a divisé par 3 le temps que je passais sur ma
+            comptabilité. Leurs liens de paiement Mobile Money sont magiques."
+          </p>
+          <div class="flex items-center gap-4">
+            <div
+              class="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 overflow-hidden"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=150&auto=format&fit=crop"
+                alt="User"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <div class="font-bold">Amadou Fall</div>
+              <div class="text-slate-400 text-sm">CEO, TechAfrica Studio</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      lucide.createIcons();
+      // Basic GSAP reveal logic
+      if (typeof gsap !== "undefined") {
+        gsap.registerPlugin(ScrollTrigger);
+        document.querySelectorAll(".reveal").forEach((el) => {
+          gsap.to(el, {
+            scrollTrigger: {
+              trigger: el,
+              start: "top 85%",
+              toggleClass: "active",
+              once: true,
+            },
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

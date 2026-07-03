@@ -1,0 +1,1649 @@
+<!doctype html>
+<html lang="fr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iziFacture - Facturation simple pour entrepreneurs africains</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- GSAP & Lucide Icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              display: ["Plus Jakarta Sans", "sans-serif"],
+            },
+            colors: {
+              primary: {
+                400: "#4ade80",
+                500: "#22c55e",
+                600: "#16a34a",
+                700: "#15803d",
+              },
+              dark: "#0f172a",
+              darker: "#020617",
+            },
+            boxShadow: {
+              glow: "0 0 20px rgba(22, 163, 74, 0.3)",
+              "glow-lg": "0 0 40px rgba(22, 163, 74, 0.2)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Custom CSS -->
+    <style>
+      body {
+        background-color: #f8fafc;
+        overflow-x: hidden;
+      }
+
+      /* Noise Texture */
+      .noise-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Glassmorphism */
+      .glass-nav {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+      }
+
+      .glass-card-dark {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .text-gradient {
+        background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      /* Magnetic Button Wrapper */
+      .magnetic-wrap {
+        display: inline-block;
+      }
+
+      /* Initial state for GSAP reveals */
+      .reveal {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(30px);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      /* Mockup specific styles */
+      .mockup-container {
+        perspective: 1200px;
+      }
+      .mockup-inner {
+        transform: rotateX(8deg) rotateY(-12deg);
+        transform-style: preserve-3d;
+        transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+      .mockup-container:hover .mockup-inner {
+        transform: rotateX(0deg) rotateY(0deg);
+      }
+      .floating-element {
+        transform: translateZ(50px);
+      }
+      .method-radio:checked + .method-card {
+        border-color: #22c55e;
+        background-color: #f0fdf4;
+        box-shadow: 0 0 0 1px #22c55e;
+      }
+      .method-radio:checked + .method-card .check-icon {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .noise-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+      .btn-loading .btn-text {
+        opacity: 0;
+      }
+      .btn-loading .spinner {
+        display: block;
+      }
+    </style>
+  </head>
+  <body class="text-slate-900 selection:bg-primary-500 selection:text-white">
+    <div class="noise-bg"></div>
+    <!-- Sidebar Overlay -->
+    <div
+      id="sidebar-overlay"
+      class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[110] opacity-0 pointer-events-none transition-opacity duration-300"
+      onclick="toggleSidebar()"
+    ></div>
+
+    <!-- Sidebar -->
+    <aside
+      id="sidebar"
+      class="fixed top-0 left-0 w-80 h-full bg-white z-[120] shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col"
+    >
+      <div
+        class="p-6 flex items-center justify-between border-b border-slate-100"
+      >
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-display font-bold text-xl"
+          >
+            i
+          </div>
+          <span class="font-display font-bold text-xl tracking-tight"
+            >iziFacture</span
+          >
+        </div>
+        <button
+          onclick="toggleSidebar()"
+          class="p-2 text-slate-400 hover:text-slate-800 rounded-lg hover:bg-slate-800 transition-colors"
+        >
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 flex-grow overflow-y-auto">
+        <div class="space-y-8">
+          <div>
+            <h4
+              class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3"
+            >
+              Actions rapides
+            </h4>
+            <ul class="space-y-1">
+              <li>
+                <button
+                  class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                >
+                  <i data-lucide="download" class="w-4 h-4 text-slate-400"></i>
+                  Télécharger PDF
+                </button>
+              </li>
+              <li>
+                <button
+                  onclick="window.print()"
+                  class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                >
+                  <i data-lucide="printer" class="w-4 h-4 text-slate-400"></i>
+                  Imprimer la facture
+                </button>
+              </li>
+              <li>
+                <button
+                  class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                >
+                  <i data-lucide="share-2" class="w-4 h-4 text-slate-400"></i>
+                  Partager le lien
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4
+              class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3"
+            >
+              Informations
+            </h4>
+            <ul class="space-y-1">
+              <li>
+                <button
+                  class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                >
+                  <i data-lucide="history" class="w-4 h-4 text-slate-400"></i>
+                  Historique des paiements
+                </button>
+              </li>
+              <li>
+                <button
+                  class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                >
+                  <i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i>
+                  Voir le devis lié
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4
+              class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3"
+            >
+              Support
+            </h4>
+            <ul class="space-y-1">
+              <li>
+                <button
+                  class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                >
+                  <i
+                    data-lucide="message-square"
+                    class="w-4 h-4 text-slate-400"
+                  ></i>
+                  Contacter TechAfrica
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t border-slate-100 bg-slate-50">
+        <a
+          href="#"
+          onclick="closeDemoModal(event)"
+          class="flex items-center gap-3 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+        >
+          <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour à l'accueil
+        </a>
+      </div>
+    </aside>
+
+    <!-- Global Sidebar Toggle Button (Left Edge) -->
+    <button
+      onclick="toggleSidebar()"
+      class="fixed left-0 top-1/2 -translate-y-1/2 z-[90] bg-slate-900 border border-l-0 border-slate-800 shadow-[0_0_20px_rgba(22,163,74,0.3)] rounded-r-2xl p-3 pr-4 flex flex-col items-center gap-2 hover:bg-slate-50 transition-all hover:pr-5 group"
+    >
+      <i
+        data-lucide="settings-2"
+        class="w-5 h-5 text-white group-hover:rotate-90 transition-transform duration-300"
+      ></i>
+      <span
+        style="writing-mode: vertical-rl; text-orientation: mixed"
+        class="text-xs font-semibold text-slate-300 tracking-wider rotate-180 uppercase mt-2"
+        >Options</span
+      >
+    </button>
+
+    <!-- Navigation -->
+    <nav
+      class="fixed top-0 w-full z-40 glass-nav transition-all duration-300"
+      id="navbar"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-display font-bold text-xl"
+          >
+            i
+          </div>
+          <span class="font-display font-bold text-xl tracking-tight"
+            >iziFacture</span
+          >
+        </div>
+        <div
+          class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600"
+        >
+          <a
+            href="#fonctionnalites"
+            class="hover:text-primary-600 transition-colors"
+            >Fonctionnalités</a
+          >
+          <a
+            href="#comment-ca-marche"
+            class="hover:text-primary-600 transition-colors"
+            >Comment ça marche</a
+          >
+          <a href="#tarifs" class="hover:text-primary-600 transition-colors"
+            >Tarifs</a
+          >
+        </div>
+        <div class="flex items-center gap-4">
+          <a
+            href="/dashboard"
+            class="hidden md:block text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >Connexion</a
+          >
+          <div class="magnetic-wrap">
+            <a
+              href="/dashboard"
+              class="magnetic-btn px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-full shadow-glow transition-colors"
+            >
+              S'inscrire
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+      <!-- Background decorative blobs -->
+      <div
+        class="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[800px] h-[800px] bg-primary-400/20 rounded-full blur-3xl -z-10"
+      ></div>
+      <div
+        class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[600px] h-[600px] bg-blue-400/10 rounded-full blur-3xl -z-10"
+      ></div>
+
+      <div
+        class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center"
+      >
+        <div class="max-w-2xl reveal reveal-left">
+          <div
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold tracking-wide uppercase mb-6 border border-primary-100"
+          >
+            <span class="relative flex h-2 w-2">
+              <span
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"
+              ></span>
+              <span
+                class="relative inline-flex rounded-full h-2 w-2 bg-primary-500"
+              ></span>
+            </span>
+            Lancement officiel en Afrique
+          </div>
+          <h1
+            class="font-display text-5xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-6"
+          >
+            Fini les factures sur Excel. <br />
+            <span class="text-gradient">Facturez comme un pro.</span>
+          </h1>
+          <p class="text-lg text-slate-600 mb-10 leading-relaxed max-w-lg">
+            Le SaaS de facturation moderne et simple pour les entrepreneurs
+            africains. Créez des factures élégantes, calculez la TVA (18%)
+            automatiquement et suivez vos paiements en temps réel.
+          </p>
+          <div class="flex flex-wrap items-center gap-4">
+            <div class="magnetic-wrap">
+              <a
+                href="/dashboard"
+                class="magnetic-btn px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-full shadow-glow-lg transition-colors flex items-center gap-2"
+              >
+                Commencer gratuitement
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </a>
+            </div>
+            <div class="magnetic-wrap">
+              <a
+                href="/dashboard"
+                onclick="openDemoModal(event)"
+                class="magnetic-btn px-8 py-4 bg-white text-slate-900 border border-slate-200 hover:border-slate-300 font-medium rounded-full shadow-sm transition-all flex items-center gap-2"
+              >
+                Voir la démo
+              </a>
+            </div>
+          </div>
+          <div class="mt-10 flex items-center gap-4 text-sm text-slate-500">
+            <div class="flex -space-x-2">
+              <img
+                class="w-8 h-8 rounded-full border-2 border-white"
+                src="https://i.pravatar.cc/100?img=1"
+                alt="User"
+              />
+              <img
+                class="w-8 h-8 rounded-full border-2 border-white"
+                src="https://i.pravatar.cc/100?img=2"
+                alt="User"
+              />
+              <img
+                class="w-8 h-8 rounded-full border-2 border-white"
+                src="https://i.pravatar.cc/100?img=3"
+                alt="User"
+              />
+            </div>
+            <p>Rejoint par +1000 entrepreneurs</p>
+          </div>
+        </div>
+
+        <!-- Dashboard Mockup -->
+        <div
+          class="relative mockup-container lg:h-[600px] flex items-center justify-center reveal reveal-right mt-12 lg:mt-0"
+        >
+          <div class="mockup-inner relative w-full max-w-md lg:max-w-lg">
+            <!-- Main Dashboard Card -->
+            <div
+              class="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden relative z-10"
+            >
+              <div
+                class="p-6 bg-slate-50 border-b border-slate-100 flex items-center justify-between"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600"
+                  >
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs text-slate-500 font-medium">
+                      Facture #FAC-2024-089
+                    </div>
+                    <div class="text-sm font-bold text-slate-900">
+                      TechAfrica Studio
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold"
+                >
+                  Payée
+                </div>
+              </div>
+              <div class="p-6 space-y-6">
+                <div class="flex justify-between items-end">
+                  <div>
+                    <div class="text-xs text-slate-500 mb-1">Montant total</div>
+                    <div class="font-display text-3xl font-bold text-slate-900">
+                      450 000
+                      <span class="text-lg text-slate-400 font-medium"
+                        >FCFA</span
+                      >
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xs text-slate-500 mb-1">
+                      Date d'échéance
+                    </div>
+                    <div class="text-sm font-medium text-slate-700">
+                      15 Oct 2024
+                    </div>
+                  </div>
+                </div>
+                <div class="h-px bg-slate-100 w-full"></div>
+                <div class="space-y-3">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-slate-600">Refonte site web</span>
+                    <span class="font-medium">381 355 FCFA</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-slate-500">TVA (18%)</span>
+                    <span class="font-medium text-slate-500">68 645 FCFA</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Floating Elements -->
+            <div
+              class="floating-element absolute -right-8 top-1/4 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 z-20 animate-[bounce_4s_infinite]"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600"
+                >
+                  <i data-lucide="check" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-slate-900">
+                    Paiement reçu
+                  </div>
+                  <div class="text-[10px] text-slate-500">Il y a 2 minutes</div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="floating-element absolute -left-12 bottom-1/4 bg-dark p-5 rounded-2xl shadow-xl border border-slate-800 z-20 animate-[bounce_5s_infinite_reverse]"
+            >
+              <div class="text-xs text-slate-400 mb-1">Revenus du mois</div>
+              <div class="font-display text-xl font-bold text-white mb-2">
+                2.4M
+                <span class="text-sm font-normal text-slate-500">FCFA</span>
+              </div>
+              <div class="flex items-center gap-1 text-xs text-primary-400">
+                <i data-lucide="trending-up" class="w-3 h-3"></i>
+                <span>+12.5%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social Proof Logos -->
+    <section class="py-12 bg-white border-b border-slate-100 reveal reveal-up">
+      <div class="max-w-7xl mx-auto px-6 text-center">
+        <p
+          class="text-sm font-semibold text-slate-400 tracking-wider uppercase mb-8"
+        >
+          Ils nous font confiance pour leur facturation
+        </p>
+        <div
+          class="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500"
+        >
+          <div
+            class="flex items-center gap-2 font-display font-bold text-xl text-slate-800"
+          >
+            <i data-lucide="layers" class="w-6 h-6"></i> TechAfrica
+          </div>
+          <div
+            class="flex items-center gap-2 font-display font-bold text-xl text-slate-800"
+          >
+            <i data-lucide="hexagon" class="w-6 h-6"></i> SenDelivery
+          </div>
+          <div
+            class="flex items-center gap-2 font-display font-bold text-xl text-slate-800"
+          >
+            <i data-lucide="triangle" class="w-6 h-6"></i> OuagaDigital
+          </div>
+          <div
+            class="flex items-center gap-2 font-display font-bold text-xl text-slate-800"
+          >
+            <i data-lucide="circle-dot" class="w-6 h-6"></i> AbidjanHub
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Statistics Strip -->
+    <section
+      class="bg-darker text-white py-12 border-y border-slate-800 reveal reveal-up"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-slate-800"
+      >
+        <div>
+          <div class="font-display text-4xl font-bold mb-2">15M+</div>
+          <div class="text-sm text-slate-400">FCFA facturés</div>
+        </div>
+        <div>
+          <div class="font-display text-4xl font-bold mb-2">1000+</div>
+          <div class="text-sm text-slate-400">Entrepreneurs</div>
+        </div>
+        <div>
+          <div class="font-display text-4xl font-bold mb-2">0</div>
+          <div class="text-sm text-slate-400">Erreur de TVA</div>
+        </div>
+        <div>
+          <div class="font-display text-4xl font-bold mb-2">24/7</div>
+          <div class="text-sm text-slate-400">Support local</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="py-24 bg-white relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-16 reveal reveal-up">
+          <h2 class="font-display text-3xl md:text-4xl font-bold mb-4">
+            Pourquoi perdre du temps avec des outils inadaptés ?
+          </h2>
+          <p class="text-slate-600">
+            La facturation ne devrait pas être une source de stress pour votre
+            entreprise.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <!-- Problem 1 -->
+          <div
+            class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-shadow reveal reveal-up"
+            style="transition-delay: 0.1s"
+          >
+            <div
+              class="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mb-6"
+            >
+              <i data-lucide="x-circle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-xl mb-3">Factures sur Excel ou Word</h3>
+            <p class="text-slate-600 text-sm leading-relaxed">
+              Faire ses factures manuellement manque de professionnalisme et
+              entache votre crédibilité face aux grands clients.
+            </p>
+          </div>
+          <!-- Problem 2 -->
+          <div
+            class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-shadow reveal reveal-up"
+            style="transition-delay: 0.2s"
+          >
+            <div
+              class="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mb-6"
+            >
+              <i data-lucide="calculator" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-xl mb-3">Erreurs de calcul TVA</h3>
+            <p class="text-slate-600 text-sm leading-relaxed">
+              Calculer la TVA à 18% manuellement entraîne des erreurs, des
+              ratures et des problèmes avec l'administration fiscale.
+            </p>
+          </div>
+          <!-- Problem 3 -->
+          <div
+            class="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-shadow reveal reveal-up"
+            style="transition-delay: 0.3s"
+          >
+            <div
+              class="w-12 h-12 rounded-2xl bg-slate-200 text-slate-600 flex items-center justify-center mb-6"
+            >
+              <i data-lucide="clock" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-xl mb-3">
+              Suivi des paiements chaotique
+            </h3>
+            <p class="text-slate-600 text-sm leading-relaxed">
+              Oublier qui vous a payé et qui vous doit de l'argent paralyse
+              votre trésorerie et bloque votre croissance.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section (Dark Theme) -->
+    <section
+      id="fonctionnalites"
+      class="py-24 bg-dark relative overflow-hidden text-white"
+    >
+      <!-- Glow effects -->
+      <div
+        class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/20 rounded-full blur-[100px] pointer-events-none"
+      ></div>
+      <div
+        class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none"
+      ></div>
+
+      <div class="max-w-7xl mx-auto px-6 relative z-10">
+        <div class="max-w-2xl mb-16 reveal reveal-up">
+          <div
+            class="text-primary-400 font-semibold tracking-wider uppercase text-sm mb-3"
+          >
+            Fonctionnalités Premium
+          </div>
+          <h2
+            class="font-display text-4xl md:text-5xl font-bold mb-6 leading-tight"
+          >
+            La seule plateforme dont vous avez besoin.
+          </h2>
+          <p class="text-slate-400 text-lg">
+            Centralisez votre facturation et pilotez votre activité sereinement
+            avec des outils conçus pour votre réalité.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Feature 1 -->
+          <div class="glass-card-dark p-8 rounded-3xl reveal reveal-up">
+            <div
+              class="w-14 h-14 rounded-2xl bg-primary-500/20 text-primary-400 flex items-center justify-center mb-6 border border-primary-500/30"
+            >
+              <i data-lucide="file-check-2" class="w-7 h-7"></i>
+            </div>
+            <h3 class="font-display text-2xl font-bold mb-3">
+              Factures pro en 2 clics
+            </h3>
+            <p class="text-slate-400 leading-relaxed mb-6">
+              Générez des factures à votre image. Ajoutez votre logo,
+              sélectionnez un client, et laissez la magie opérer. Vos documents
+              sont impeccables.
+            </p>
+            <img
+              src="data:image/svg+xml,%3Csvg width='400' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%231e293b' rx='12'/%3E%3Crect x='20' y='20' width='60' height='60' rx='8' fill='%23334155'/%3E%3Crect x='100' y='30' width='150' height='16' rx='4' fill='%23475569'/%3E%3Crect x='100' y='55' width='100' height='12' rx='4' fill='%23334155'/%3E%3Crect x='320' y='40' width='60' height='24' rx='12' fill='%2316a34a' opacity='0.2'/%3E%3C/svg%3E"
+              alt="UI Element"
+              class="w-full rounded-xl opacity-80 mix-blend-screen"
+            />
+          </div>
+
+          <!-- Feature 2 -->
+          <div
+            class="glass-card-dark p-8 rounded-3xl reveal reveal-up"
+            style="transition-delay: 0.1s"
+          >
+            <div
+              class="w-14 h-14 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-6 border border-blue-500/30"
+            >
+              <i data-lucide="calculator" class="w-7 h-7"></i>
+            </div>
+            <h3 class="font-display text-2xl font-bold mb-3">
+              TVA 18% automatique
+            </h3>
+            <p class="text-slate-400 leading-relaxed mb-6">
+              Fini les erreurs de calcul. Entrez vos montants HT ou TTC, la
+              plateforme calcule instantanément la TVA applicable pour vous.
+            </p>
+            <img
+              src="data:image/svg+xml,%3Csvg width='400' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%231e293b' rx='12'/%3E%3Ctext x='20' y='40' font-family='sans-serif' font-size='14' fill='%2394a3b8'%3ESous-total HT%3C/text%3E%3Ctext x='380' y='40' font-family='sans-serif' font-size='14' font-weight='bold' fill='%23f8fafc' text-anchor='end'%3E1 500 000%3C/text%3E%3Ctext x='20' y='65' font-family='sans-serif' font-size='14' fill='%2394a3b8'%3ETVA (18%25)%3C/text%3E%3Ctext x='380' y='65' font-family='sans-serif' font-size='14' font-weight='bold' fill='%23f8fafc' text-anchor='end'%3E+ 270 000%3C/text%3E%3Crect x='20' y='85' width='360' height='1' fill='%23334155'/%3E%3Ctext x='20' y='105' font-family='sans-serif' font-size='16' font-weight='bold' fill='%2322c55e'%3ETotal TTC%3C/text%3E%3Ctext x='380' y='105' font-family='sans-serif' font-size='16' font-weight='bold' fill='%2322c55e' text-anchor='end'%3E1 770 000 FCFA%3C/text%3E%3C/svg%3E"
+              alt="UI Element"
+              class="w-full rounded-xl opacity-80 mix-blend-screen"
+            />
+          </div>
+
+          <!-- Feature 3 -->
+          <div
+            class="glass-card p-8 rounded-3xl reveal reveal-up"
+            style="transition-delay: 0.2s"
+          >
+            <div
+              class="w-14 h-14 rounded-2xl bg-orange-100 text-brand-orange flex items-center justify-center mb-6"
+            >
+              <i data-lucide="smartphone" class="w-7 h-7"></i>
+            </div>
+            <h3 class="font-display text-2xl font-bold mb-3">
+              Paiement Mobile Money
+            </h3>
+            <p class="text-slate-600 leading-relaxed mb-6">
+              Intégration native de Wave, Orange Money et Free Money. Vos
+              clients paient en un clic depuis leur téléphone.
+            </p>
+            <img
+              src="data:image/svg+xml,%3Csvg width='400' height='120' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23f8fafc' rx='12'/%3E%3Crect x='20' y='20' width='360' height='80' rx='8' fill='%23ffffff' stroke='%23e2e8f0'/%3E%3Ccircle cx='50' cy='60' r='16' fill='%233b82f6'/%3E%3Ctext x='80' y='65' font-family='sans-serif' font-size='16' font-weight='bold' fill='%230f172a'%3EWave%3C/text%3E%3Ccircle cx='150' cy='60' r='16' fill='%23f97316'/%3E%3Ctext x='180' y='65' font-family='sans-serif' font-size='16' font-weight='bold' fill='%230f172a'%3EOrange%3C/text%3E%3C/svg%3E"
+              alt="UI Element"
+              class="w-full rounded-xl shadow-sm"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comment ça marche -->
+    <section id="comment-ca-marche" class="py-24 bg-white relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-20 reveal reveal-up">
+          <div
+            class="text-primary-600 font-semibold tracking-wider uppercase text-sm mb-3"
+          >
+            Simple et Rapide
+          </div>
+          <h2 class="font-display text-4xl md:text-5xl font-bold mb-6">
+            Comment ça marche ?
+          </h2>
+          <p class="text-slate-600 text-lg">
+            Trois étapes simples pour révolutionner votre facturation et être
+            payé plus rapidement.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-12 relative">
+          <!-- Connecting Line (Desktop) -->
+          <div
+            class="hidden md:block absolute top-12 left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-transparent via-slate-200 to-transparent -z-10"
+          ></div>
+
+          <!-- Step 1 -->
+          <div class="relative text-center reveal reveal-up">
+            <div
+              class="w-24 h-24 mx-auto bg-white rounded-full border-4 border-slate-50 shadow-xl flex items-center justify-center mb-8 relative z-10"
+            >
+              <div
+                class="w-16 h-16 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-2xl font-bold font-display"
+              >
+                1
+              </div>
+            </div>
+            <h3 class="font-display text-xl font-bold mb-4">
+              Créez votre facture
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              Remplissez les informations de votre client et vos prestations. La
+              TVA se calcule toute seule.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div
+            class="relative text-center reveal reveal-up"
+            style="transition-delay: 0.1s"
+          >
+            <div
+              class="w-24 h-24 mx-auto bg-white rounded-full border-4 border-slate-50 shadow-xl flex items-center justify-center mb-8 relative z-10"
+            >
+              <div
+                class="w-16 h-16 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-2xl font-bold font-display"
+              >
+                2
+              </div>
+            </div>
+            <h3 class="font-display text-xl font-bold mb-4">Envoyez le lien</h3>
+            <p class="text-slate-600 leading-relaxed">
+              Générez un lien sécurisé et envoyez-le par WhatsApp, email ou SMS
+              à votre client.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div
+            class="relative text-center reveal reveal-up"
+            style="transition-delay: 0.2s"
+          >
+            <div
+              class="w-24 h-24 mx-auto bg-white rounded-full border-4 border-slate-50 shadow-xl flex items-center justify-center mb-8 relative z-10"
+            >
+              <div
+                class="w-16 h-16 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-2xl font-bold font-display"
+              >
+                3
+              </div>
+            </div>
+            <h3 class="font-display text-xl font-bold mb-4">
+              Recevez votre argent
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              Votre client paie par Mobile Money ou carte. L'argent arrive
+              directement sur votre compte.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tarifs Section -->
+    <section id="tarifs" class="py-24 bg-slate-50 relative">
+      <div class="max-w-7xl mx-auto px-6 relative z-10">
+        <div class="text-center max-w-3xl mx-auto mb-16 reveal">
+          <h2 class="text-3xl md:text-5xl font-display font-bold mb-6">
+            Un tarif simple, sans surprise
+          </h2>
+          <p class="text-lg text-slate-500">
+            Commencez gratuitement, évoluez selon vos besoins. Pas de frais
+            cachés.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <!-- Gratuit -->
+          <div
+            class="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl hover:-translate-y-2 transition-transform duration-500 reveal"
+          >
+            <h3 class="text-2xl font-display font-bold text-slate-900 mb-2">
+              Essentiel
+            </h3>
+            <div class="flex items-baseline gap-2 mb-6">
+              <span class="text-5xl font-bold text-slate-900">0</span>
+              <span class="text-xl font-medium text-slate-500"
+                >FCFA / mois</span
+              >
+            </div>
+            <p class="text-slate-500 mb-8">
+              Pour les freelances et petites entreprises qui se lancent.
+            </p>
+            <ul class="space-y-4 mb-8">
+              <li class="flex items-center gap-3 text-slate-700">
+                <i data-lucide="check" class="w-5 h-5 text-primary-500"></i>
+                Jusqu'à 10 factures/mois
+              </li>
+              <li class="flex items-center gap-3 text-slate-700">
+                <i data-lucide="check" class="w-5 h-5 text-primary-500"></i>
+                Paiement Mobile Money
+              </li>
+              <li class="flex items-center gap-3 text-slate-700">
+                <i data-lucide="check" class="w-5 h-5 text-primary-500"></i>
+                Modèles standards
+              </li>
+              <li class="flex items-center gap-3 text-slate-400">
+                <i data-lucide="x" class="w-5 h-5 text-slate-300"></i> Relances
+                automatiques
+              </li>
+            </ul>
+            <div class="magnetic-wrap w-full">
+              <a
+                href="/dashboard"
+                class="magnetic-btn w-full block text-center py-4 rounded-xl border-2 border-slate-200 text-slate-900 font-medium hover:border-slate-900 transition-colors"
+              >
+                Commencer gratuitement
+              </a>
+            </div>
+          </div>
+
+          <!-- Premium -->
+          <div
+            class="bg-slate-900 rounded-3xl p-8 border border-slate-800 shadow-[0_20px_40px_-15px_rgba(22,163,74,0.3)] relative overflow-hidden hover:-translate-y-2 transition-transform duration-500 reveal"
+          >
+            <div class="absolute top-0 right-0 p-4">
+              <span
+                class="bg-primary-500/20 text-primary-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"
+                >Populaire</span
+              >
+            </div>
+            <div
+              class="absolute top-[-50px] right-[-50px] w-40 h-40 bg-primary-500/20 blur-[50px] rounded-full"
+            ></div>
+
+            <h3 class="text-2xl font-display font-bold text-white mb-2">Pro</h3>
+            <div class="flex items-baseline gap-2 mb-6">
+              <span class="text-5xl font-bold text-white">4 900</span>
+              <span class="text-xl font-medium text-slate-400"
+                >FCFA / mois</span
+              >
+            </div>
+            <p class="text-slate-400 mb-8">
+              Pour les entreprises en croissance qui automatisent tout.
+            </p>
+            <ul class="space-y-4 mb-8">
+              <li class="flex items-center gap-3 text-slate-300">
+                <i data-lucide="check" class="w-5 h-5 text-primary-400"></i>
+                Factures illimitées
+              </li>
+              <li class="flex items-center gap-3 text-slate-300">
+                <i data-lucide="check" class="w-5 h-5 text-primary-400"></i>
+                Paiement Mobile Money & Carte
+              </li>
+              <li class="flex items-center gap-3 text-slate-300">
+                <i data-lucide="check" class="w-5 h-5 text-primary-400"></i>
+                Relances automatiques
+              </li>
+              <li class="flex items-center gap-3 text-slate-300">
+                <i data-lucide="check" class="w-5 h-5 text-primary-400"></i>
+                Marque blanche (sans logo iziFacture)
+              </li>
+            </ul>
+            <div class="magnetic-wrap w-full">
+              <a
+                href="/dashboard"
+                class="magnetic-btn w-full block text-center py-4 rounded-xl bg-primary-500 text-white font-medium hover:bg-primary-600 shadow-glow transition-colors"
+              >
+                Passer en Pro
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section
+      class="py-24 bg-slate-900 text-white relative overflow-hidden"
+      id="contact"
+    >
+      <div
+        class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"
+      ></div>
+      <div
+        class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-1/2 bg-primary-500/20 blur-[120px] rounded-full pointer-events-none"
+      ></div>
+      <div class="max-w-4xl mx-auto px-6 relative z-10 text-center reveal">
+        <h2 class="text-4xl md:text-5xl font-display font-bold mb-6">
+          Prêt à professionnaliser votre facturation ?
+        </h2>
+        <p class="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
+          Rejoignez les entreprises qui utilisent iziFacture pour être payées
+          plus vite et gérer leurs finances sans stress.
+        </p>
+        <div
+          class="flex flex-col sm:flex-row gap-4 justify-center items-center"
+        >
+          <div class="magnetic-wrap">
+            <a
+              href="/dashboard"
+              class="magnetic-btn px-8 py-4 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-full shadow-glow-lg transition-colors flex items-center gap-2"
+            >
+              Créer mon compte gratuit
+            </a>
+          </div>
+          <div class="magnetic-wrap">
+            <button
+              onclick="openDemoModal(event)"
+              class="magnetic-btn px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-medium rounded-full backdrop-blur-sm transition-colors"
+            >
+              Voir la démo
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 py-12 border-t border-slate-800">
+      <div
+        class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6"
+      >
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white font-display font-bold text-xl"
+          >
+            i
+          </div>
+          <span class="font-display font-bold text-xl tracking-tight text-white"
+            >iziFacture</span
+          >
+        </div>
+        <p class="text-slate-500 text-sm">
+          © 2024 iziFacture par TechAfrica Studio. Tous droits réservés.
+        </p>
+      </div>
+    </footer>
+
+    <!-- Fullscreen Demo Modal -->
+    <div
+      id="demo-modal"
+      class="fixed inset-0 z-[100] bg-slate-50 opacity-0 pointer-events-none transition-all duration-500 flex flex-col h-screen overflow-hidden"
+    >
+      <button
+        onclick="closeDemoModal()"
+        class="absolute top-4 right-4 sm:top-6 sm:right-6 z-[200] w-12 h-12 bg-white hover:bg-slate-50 text-slate-900 rounded-full flex items-center justify-center shadow-xl border border-slate-200 transition-colors group"
+      >
+        <i
+          data-lucide="x"
+          class="w-6 h-6 group-hover:scale-110 transition-transform"
+        ></i>
+      </button>
+      <div class="flex-grow overflow-y-auto relative z-[105]">
+        <!-- Background Accents -->
+        <div
+          class="fixed top-0 left-0 w-full h-96 bg-gradient-to-b from-primary-50 to-transparent -z-10"
+        ></div>
+        <div
+          class="fixed top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-primary-100/50 blur-[100px] -z-10"
+        ></div>
+
+        <main
+          class="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8"
+        >
+          <div
+            class="w-full max-w-6xl grid lg:grid-cols-12 gap-8 items-start opacity-0 translate-y-8"
+            id="main-container"
+          >
+            <!-- Left Column: Editable Invoice Form -->
+            <div class="lg:col-span-8 flex flex-col gap-6">
+              <!-- Menu Button for mobile/small screens -->
+              <button
+                onclick="toggleSidebar()"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-full hover:bg-slate-50 transition-colors w-fit shadow-sm"
+              >
+                <i data-lucide="menu" class="w-4 h-4"></i>
+                Options
+              </button>
+
+              <div
+                class="bg-white rounded-3xl p-8 shadow-xl border border-slate-100"
+              >
+                <!-- Header -->
+                <div
+                  class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-10"
+                >
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-display font-bold text-2xl shadow-lg"
+                    >
+                      TA
+                    </div>
+                    <div>
+                      <h2
+                        class="font-bold text-xl leading-tight text-slate-900"
+                      >
+                        TechAfrica Studio
+                      </h2>
+                      <p class="text-sm text-slate-500">
+                        contact@techafrica.com
+                      </p>
+                    </div>
+                  </div>
+                  <div class="text-left sm:text-right w-full sm:w-auto">
+                    <h1
+                      class="text-3xl font-display font-bold text-slate-200 tracking-wider uppercase mb-2"
+                    >
+                      Facture
+                    </h1>
+                    <div
+                      class="flex items-center sm:justify-end gap-2 text-slate-500 font-mono text-sm"
+                    >
+                      N°
+                      <input
+                        type="text"
+                        value="INV-2024-001"
+                        class="border-b border-dashed border-slate-300 focus:border-primary-500 outline-none w-32 bg-transparent text-right sm:text-left text-slate-900 font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Client Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                  <div>
+                    <h3
+                      class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3"
+                    >
+                      Facturé à
+                    </h3>
+                    <div class="space-y-2">
+                      <input
+                        type="text"
+                        placeholder="Nom du client / Entreprise"
+                        value="Acme Corp"
+                        class="w-full text-lg font-bold text-slate-900 placeholder-slate-300 outline-none border-b border-transparent focus:border-primary-500 transition-colors"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email du client"
+                        value="contact@acme.com"
+                        class="w-full text-sm text-slate-600 placeholder-slate-300 outline-none border-b border-transparent focus:border-primary-500 transition-colors"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Adresse"
+                        value="Dakar, Sénégal"
+                        class="w-full text-sm text-slate-600 placeholder-slate-300 outline-none border-b border-transparent focus:border-primary-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <div class="space-y-4">
+                    <div>
+                      <h3
+                        class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"
+                      >
+                        Date d'émission
+                      </h3>
+                      <input
+                        type="date"
+                        value="2024-07-01"
+                        class="text-sm font-medium text-slate-900 outline-none border-b border-transparent focus:border-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <h3
+                        class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"
+                      >
+                        Date d'échéance
+                      </h3>
+                      <input
+                        type="date"
+                        value="2024-07-15"
+                        class="text-sm font-medium text-slate-900 outline-none border-b border-transparent focus:border-primary-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Invoice Items Table -->
+                <div class="mb-6 overflow-x-auto">
+                  <table class="w-full min-w-[500px]" id="invoice-table">
+                    <thead>
+                      <tr
+                        class="border-b border-slate-200 text-left text-xs font-bold text-slate-400 uppercase tracking-wider"
+                      >
+                        <th class="pb-3 w-1/2">Description</th>
+                        <th class="pb-3 text-center">Qté</th>
+                        <th class="pb-3 text-right">Prix Unitaire</th>
+                        <th class="pb-3 text-right">Total</th>
+                        <th class="pb-3 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="invoice-items" class="text-sm">
+                      <!-- Rows injected via JS -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Add Row Button -->
+                <button
+                  onclick="addInvoiceRow()"
+                  class="flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors mb-10 group"
+                >
+                  <div
+                    class="w-6 h-6 rounded-full bg-primary-50 flex items-center justify-center group-hover:bg-primary-100 transition-colors"
+                  >
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                  </div>
+                  Ajouter une ligne
+                </button>
+
+                <!-- Notes -->
+                <div>
+                  <h3
+                    class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"
+                  >
+                    Notes & Conditions
+                  </h3>
+                  <textarea
+                    rows="2"
+                    class="w-full text-sm text-slate-600 outline-none border border-slate-200 rounded-xl p-3 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all resize-none"
+                    placeholder="Merci pour votre confiance."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Summary & Actions -->
+            <div class="lg:col-span-4 sticky top-6">
+              <div
+                class="bg-slate-900 rounded-3xl shadow-2xl p-8 border border-slate-800 text-white relative overflow-hidden"
+              >
+                <div
+                  class="absolute top-0 right-0 w-32 h-32 bg-primary-500/20 rounded-full blur-[40px]"
+                ></div>
+
+                <h3 class="font-display text-xl font-bold mb-6">Résumé</h3>
+
+                <div class="space-y-4 mb-8">
+                  <div class="flex justify-between text-slate-400 text-sm">
+                    <span>Sous-total HT</span>
+                    <span class="font-mono" id="summary-subtotal">0</span>
+                  </div>
+                  <div
+                    class="flex justify-between text-slate-400 text-sm items-center"
+                  >
+                    <span>TVA (18%)</span>
+                    <span class="font-mono" id="summary-tax">0</span>
+                  </div>
+                  <div
+                    class="pt-4 border-t border-slate-800 flex justify-between items-center"
+                  >
+                    <span class="font-bold text-lg">Total TTC</span>
+                    <span
+                      class="font-display font-bold text-2xl text-primary-400"
+                      ><span id="summary-total">0</span>
+                      <span class="text-sm font-normal text-slate-500"
+                        >FCFA</span
+                      ></span
+                    >
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <button
+                    onclick="simulateSendInvoice()"
+                    id="send-invoice-btn"
+                    class="w-full relative flex items-center justify-center py-4 px-6 border border-transparent rounded-xl text-sm font-bold text-slate-900 bg-primary-500 hover:bg-primary-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-glow transition-all overflow-hidden group"
+                  >
+                    <span class="relative btn-text flex items-center gap-2">
+                      <i data-lucide="send" class="w-4 h-4"></i>
+                      Enregistrer et Envoyer
+                    </span>
+                    <svg
+                      class="hidden spinner animate-spin h-5 w-5 text-slate-900 absolute"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"
+                      ></circle>
+                      <path
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </button>
+                  <button
+                    class="w-full flex items-center justify-center py-4 px-6 rounded-xl text-sm font-bold text-white bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-700"
+                  >
+                    Télécharger PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <!-- Success Modal (Hidden by default) -->
+    <div
+      id="success-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center px-4 opacity-0 pointer-events-none"
+    >
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div
+        class="bg-white rounded-3xl p-8 max-w-sm w-full relative z-10 text-center shadow-2xl"
+      >
+        <div
+          class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500"
+        >
+          <i data-lucide="check-circle" class="w-10 h-10"></i>
+        </div>
+        <h3 class="text-2xl font-display font-bold text-slate-900 mb-2">
+          Facture envoyée !
+        </h3>
+        <p class="text-slate-500 mb-8">
+          Un reçu vous a été envoyé par email. Merci pour votre confiance.
+        </p>
+        <a
+          href="#"
+          onclick="closeDemoModal(event)"
+          class="block w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium rounded-xl transition-colors"
+        >
+          Retour à l'accueil
+        </a>
+      </div>
+    </div>
+
+    <script>
+      lucide.createIcons();
+
+      // Reveal Animations
+      const revealElements = document.querySelectorAll(".reveal");
+
+      const revealObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("active");
+            }
+          });
+        },
+        {
+          threshold: 0.1,
+          rootMargin: "0px 0px -50px 0px",
+        },
+      );
+
+      revealElements.forEach((el) => revealObserver.observe(el));
+
+      // GSAP Animations for Hero
+      gsap.fromTo(
+        ".mockup-inner",
+        {
+          y: 100,
+          opacity: 0,
+          rotationX: 10,
+          scale: 0.95,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          rotationX: 0,
+          scale: 1,
+          duration: 1.2,
+          ease: "power4.out",
+          delay: 0.2,
+        },
+      );
+
+      // Floating animation for mockup
+      gsap.to(".mockup-inner", {
+        y: "-=15",
+        duration: 2,
+        yoyo: true,
+        repeat: -1,
+        ease: "sine.inOut",
+        delay: 1.4,
+      });
+
+      // Magnetic Button Effect
+      const magneticBtns = document.querySelectorAll(".magnetic-wrap");
+
+      magneticBtns.forEach((btn) => {
+        const innerBtn = btn.querySelector(".magnetic-btn");
+
+        btn.addEventListener("mousemove", (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+
+          const moveX = (x - centerX) * 0.2;
+          const moveY = (y - centerY) * 0.2;
+
+          gsap.to(innerBtn, {
+            x: moveX,
+            y: moveY,
+            duration: 0.3,
+            ease: "power2.out",
+          });
+        });
+
+        btn.addEventListener("mouseleave", () => {
+          gsap.to(innerBtn, {
+            x: 0,
+            y: 0,
+            duration: 0.7,
+            ease: "elastic.out(1, 0.3)",
+          });
+        });
+      });
+    </script>
+
+    <script>
+      // Initialize Icons
+      lucide.createIcons();
+
+      // GSAP Animations
+      document.addEventListener("DOMContentLoaded", () => {
+        gsap.to("#main-container", {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          ease: "power3.out",
+          delay: 0.1,
+        });
+      });
+
+      // Toggle Forms
+      function toggleMethod(method) {
+        const formMobile = document.getElementById("form-mobile");
+        const formCard = document.getElementById("form-card");
+
+        if (method === "mobile") {
+          formMobile.style.opacity = "1";
+          formMobile.style.pointerEvents = "auto";
+          formMobile.style.transform = "translateY(0)";
+
+          formCard.style.opacity = "0";
+          formCard.style.pointerEvents = "none";
+          formCard.style.transform = "translateY(1rem)";
+        } else {
+          formCard.style.opacity = "1";
+          formCard.style.pointerEvents = "auto";
+          formCard.style.transform = "translateY(0)";
+
+          formMobile.style.opacity = "0";
+          formMobile.style.pointerEvents = "none";
+          formMobile.style.transform = "translateY(-1rem)";
+        }
+      }
+
+      // Simulate Payment
+      function simulatePayment() {
+        const btn = document.getElementById("pay-btn");
+        btn.classList.add("btn-loading");
+        btn.disabled = true;
+
+        // Simulate API call
+        setTimeout(() => {
+          btn.classList.remove("btn-loading");
+          btn.disabled = false;
+
+          // Show success modal
+          const modal = document.getElementById("success-modal");
+          modal.classList.remove("pointer-events-none");
+
+          gsap.set(modal.querySelector(".bg-white"), { scale: 0.9, y: 20 });
+
+          gsap.to(modal, {
+            opacity: 1,
+            duration: 0.3,
+          });
+
+          gsap.to(modal.querySelector(".bg-white"), {
+            scale: 1,
+            y: 0,
+            duration: 0.5,
+            ease: "back.out(1.5)",
+          });
+        }, 2000);
+      }
+
+      // Toggle Sidebar
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebar-overlay");
+        const isClosed = sidebar.classList.contains("-translate-x-full");
+
+        if (isClosed) {
+          sidebar.classList.remove("-translate-x-full");
+          overlay.classList.remove("opacity-0", "pointer-events-none");
+        } else {
+          sidebar.classList.add("-translate-x-full");
+          overlay.classList.add("opacity-0", "pointer-events-none");
+        }
+      }
+
+      function openDemoModal(e) {
+        if (e) e.preventDefault();
+        const modal = document.getElementById("demo-modal");
+        modal.classList.remove("opacity-0", "pointer-events-none");
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+        gsap.fromTo(
+          "#main-container",
+          { y: 30, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.6, ease: "power3.out", delay: 0.2 },
+        );
+      }
+      function closeDemoModal(e) {
+        if (e) e.preventDefault();
+        const modal = document.getElementById("demo-modal");
+        modal.classList.add("opacity-0", "pointer-events-none");
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebar-overlay");
+        if (sidebar) sidebar.classList.add("-translate-x-full");
+        if (overlay) overlay.classList.add("opacity-0", "pointer-events-none");
+      }
+    </script>
+
+    <!-- Invoice Builder Logic -->
+    <script>
+      let invoiceItems = [
+        {
+          id: 1,
+          desc: "Développement Site Web E-commerce",
+          qty: 1,
+          price: 1000000,
+        },
+        { id: 2, desc: "Intégration API de Paiement", qty: 1, price: 500000 },
+      ];
+
+      function renderInvoiceItems() {
+        const tbody = document.getElementById("invoice-items");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        let subtotal = 0;
+
+        invoiceItems.forEach((item, index) => {
+          const total = item.qty * item.price;
+          subtotal += total;
+
+          const tr = document.createElement("tr");
+          tr.className = "border-b border-slate-100 group";
+          tr.innerHTML = `
+            <td class="py-4">
+              <input type="text" value="${item.desc}" onchange="updateItem(${item.id}, 'desc', this.value)" class="w-full text-slate-900 font-medium outline-none border-b border-transparent focus:border-primary-500 transition-colors bg-transparent placeholder-slate-300" placeholder="Description de l'article" />
+            </td>
+            <td class="py-4">
+              <input type="number" value="${item.qty}" min="1" onchange="updateItem(${item.id}, 'qty', this.value)" class="w-16 text-center text-slate-900 outline-none border-b border-transparent focus:border-primary-500 transition-colors mx-auto block bg-transparent" />
+            </td>
+            <td class="py-4 text-right">
+              <input type="number" value="${item.price}" min="0" onchange="updateItem(${item.id}, 'price', this.value)" class="w-28 text-right text-slate-900 outline-none border-b border-transparent focus:border-primary-500 transition-colors inline-block bg-transparent" />
+            </td>
+            <td class="py-4 text-right font-mono font-medium text-slate-900">${new Intl.NumberFormat("fr-FR").format(total)}</td>
+            <td class="py-4 text-right">
+              <button onclick="removeInvoiceItem(${item.id})" class="text-slate-300 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        const tax = subtotal * 0.18;
+        const totalTTC = subtotal + tax;
+
+        document.getElementById("summary-subtotal").innerText =
+          new Intl.NumberFormat("fr-FR").format(subtotal);
+        document.getElementById("summary-tax").innerText =
+          new Intl.NumberFormat("fr-FR").format(tax);
+        document.getElementById("summary-total").innerText =
+          new Intl.NumberFormat("fr-FR").format(totalTTC);
+
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      }
+
+      function updateItem(id, field, value) {
+        const item = invoiceItems.find((i) => i.id === id);
+        if (item) {
+          item[field] = field === "desc" ? value : Number(value);
+          renderInvoiceItems();
+        }
+      }
+
+      function addInvoiceRow() {
+        const newId =
+          invoiceItems.length > 0
+            ? Math.max(...invoiceItems.map((i) => i.id)) + 1
+            : 1;
+        invoiceItems.push({ id: newId, desc: "", qty: 1, price: 0 });
+        renderInvoiceItems();
+      }
+
+      function removeInvoiceItem(id) {
+        invoiceItems = invoiceItems.filter((i) => i.id !== id);
+        renderInvoiceItems();
+      }
+
+      function simulateSendInvoice() {
+        const btn = document.getElementById("send-invoice-btn");
+        const text = btn.querySelector(".btn-text");
+        const spinner = btn.querySelector(".spinner");
+
+        btn.classList.add("pointer-events-none");
+        text.classList.add("opacity-0");
+        spinner.classList.remove("hidden");
+
+        setTimeout(() => {
+          btn.classList.remove("pointer-events-none");
+          text.classList.remove("opacity-0");
+          spinner.classList.add("hidden");
+
+          closeDemoModal();
+          showSuccessModal();
+        }, 1500);
+      }
+
+      // Initialize if we open modal
+      const originalOpenDemoModal = window.openDemoModal;
+      window.openDemoModal = function (e) {
+        if (originalOpenDemoModal) originalOpenDemoModal(e);
+        renderInvoiceItems();
+      };
+
+      // Run once on load just in case
+      document.addEventListener("DOMContentLoaded", () => {
+        renderInvoiceItems();
+      });
+    </script>
+  </body>
+</html>
