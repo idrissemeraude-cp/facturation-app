@@ -125,6 +125,7 @@
           </p>
 
           <button
+            onclick="window.location.href = 'dashboard.html';"
             class="w-full flex items-center justify-center gap-3 px-4 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors font-medium text-slate-700 mb-6 group"
           >
             <svg
@@ -162,7 +163,7 @@
           <form
             onsubmit="
               event.preventDefault();
-              window.location.href = 'dashboard.html';
+              alert('Un message d\'authentification a été envoyé à votre adresse email ! Veuillez le consulter pour vous connecter.');
             "
             class="space-y-4"
           >
