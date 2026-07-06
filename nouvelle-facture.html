@@ -206,12 +206,14 @@
                   >
                     TA
                   </div>
-                  <div>
-                    <h2 class="font-bold text-xl leading-tight text-slate-900">
-                      TechAfrica Studio
-                    </h2>
-                    <p class="text-sm text-slate-500">contact@techafrica.com</p>
-                  </div>
+                    <div>
+                      <h2 id="sender-nom" class="font-bold text-xl leading-tight text-slate-900">
+                        TechAfrica Studio
+                      </h2>
+                      <p id="sender-email" class="text-sm text-slate-500">contact@techafrica.com</p>
+                      <p id="sender-localisation" class="text-sm text-slate-500">Plateau, Abidjan</p>
+                      <p id="sender-telephone" class="text-sm text-slate-500">+225 01 23 45 67 89</p>
+                    </div>
                 </div>
                 <div class="text-left sm:text-right w-full sm:w-auto">
                   <h1
@@ -475,7 +477,21 @@
           overlay.classList.remove("opacity-100");
           overlay.classList.add("opacity-0", "pointer-events-none");
         }
+        }
       }
+
+      // Load parameters from localStorage
+      window.addEventListener('DOMContentLoaded', () => {
+        const nom = localStorage.getItem('param_nom');
+        const email = localStorage.getItem('param_email');
+        const loc = localStorage.getItem('param_localisation');
+        const tel = localStorage.getItem('param_telephone');
+        
+        if (nom && document.getElementById('sender-nom')) document.getElementById('sender-nom').innerText = nom;
+        if (email && document.getElementById('sender-email')) document.getElementById('sender-email').innerText = email;
+        if (loc && document.getElementById('sender-localisation')) document.getElementById('sender-localisation').innerText = loc;
+        if (tel && document.getElementById('sender-telephone')) document.getElementById('sender-telephone').innerText = tel;
+      });
     </script>
   </body>
 </html>

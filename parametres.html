@@ -265,20 +265,24 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label class="block text-sm font-bold text-slate-700 mb-2">Nom de l'entreprise</label>
-                <input type="text" value="TechAfrica Studio" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-primary-500 focus:bg-white transition-colors text-slate-900" />
+                <input id="param-nom" type="text" value="TechAfrica Studio" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-primary-500 focus:bg-white transition-colors text-slate-900" />
               </div>
               <div>
                 <label class="block text-sm font-bold text-slate-700 mb-2">Email de contact</label>
-                <input type="email" value="contact@techafrica.studio" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-primary-500 focus:bg-white transition-colors text-slate-900" />
+                <input id="param-email" type="email" value="contact@techafrica.studio" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-primary-500 focus:bg-white transition-colors text-slate-900" />
               </div>
-              <div class="sm:col-span-2">
-                <label class="block text-sm font-bold text-slate-700 mb-2">Adresse postale</label>
-                <input type="text" value="Plateau, Abidjan, Côte d'Ivoire" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-primary-500 focus:bg-white transition-colors text-slate-900" />
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">Localisation</label>
+                <input id="param-localisation" type="text" value="Plateau, Abidjan" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-primary-500 focus:bg-white transition-colors text-slate-900" />
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">Numéro de téléphone</label>
+                <input id="param-telephone" type="tel" value="+225 01 23 45 67 89" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-primary-500 focus:bg-white transition-colors text-slate-900" />
               </div>
             </div>
             
             <div class="mt-8 flex justify-end">
-              <button class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors shadow-glow" onclick="alert('Paramètres sauvegardés !')">
+              <button onclick="sauvegarderParametres()" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors shadow-glow">
                 Sauvegarder les modifications
               </button>
             </div>
@@ -286,6 +290,29 @@
         </div>
       </div>
     </main>
+
+    <script>
+      // Load saved parameters on page load
+      window.onload = function() {
+        const nom = localStorage.getItem('param_nom');
+        const email = localStorage.getItem('param_email');
+        const loc = localStorage.getItem('param_localisation');
+        const tel = localStorage.getItem('param_telephone');
+        
+        if (nom) document.getElementById('param-nom').value = nom;
+        if (email) document.getElementById('param-email').value = email;
+        if (loc) document.getElementById('param-localisation').value = loc;
+        if (tel) document.getElementById('param-telephone').value = tel;
+      };
+
+      function sauvegarderParametres() {
+        localStorage.setItem('param_nom', document.getElementById('param-nom').value);
+        localStorage.setItem('param_email', document.getElementById('param-email').value);
+        localStorage.setItem('param_localisation', document.getElementById('param-localisation').value);
+        localStorage.setItem('param_telephone', document.getElementById('param-telephone').value);
+        alert('Paramètres sauvegardés ! Ils apparaitront sur vos nouvelles factures.');
+      }
+    </script>
 
     <script>
       lucide.createIcons();
