@@ -272,6 +272,18 @@
           });
         });
       }
+    
+      // Auto-select plan from URL
+      window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const plan = urlParams.get('plan');
+        if (plan) {
+          const radio = document.querySelector('input[name="plan"][value="' + plan + '"]');
+          if (radio) {
+            radio.checked = true;
+          }
+        }
+      });
     </script>
   </body>
 </html>
