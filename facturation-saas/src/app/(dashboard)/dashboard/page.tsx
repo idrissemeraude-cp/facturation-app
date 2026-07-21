@@ -1,152 +1,80 @@
-"use client";
+import { createClient } from "@/utils/supabase/server";
+import DashboardClient from "./DashboardClient";
+import { redirect } from "next/navigation";
 
-import React, { useEffect, useRef } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { FileText, DollarSign, CheckCircle2, Clock } from 'lucide-react';
-import { Invoice } from '@/types';
-import gsap from "gsap";
+export default async function DashboardPage() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-// Données fictives
-const data = [
-  { name: 'Jan', total: 4000 },
-  { name: 'Fév', total: 3000 },
-  { name: 'Mar', total: 2000 },
-  { name: 'Avr', total: 2780 },
-  { name: 'Mai', total: 1890 },
-  { name: 'Juin', total: 2390 },
-  { name: 'Juil', total: 3490 },
-];
+  if (!user) {
+    redirect("/login");
+  }
 
-const recentInvoices: Partial<Invoice>[] = [
-  { id: '1', number: 'FAC-2024-001', clientId: 'TechAfrica', total: 450000, status: 'paid', issueDate: '2024-10-01' },
-  { id: '2', number: 'FAC-2024-002', clientId: 'Digital SN', total: 120000, status: 'sent', issueDate: '2024-10-05' },
-  { id: '3', number: 'FAC-2024-003', clientId: 'AgriCorp', total: 850000, status: 'overdue', issueDate: '2024-09-15' },
-  { id: '4', number: 'FAC-2024-004', clientId: 'Startup CI', total: 320000, status: 'draft', issueDate: '2024-10-10' },
-];
+  const { data: invoices, error } = await supabase
+    .from("invoices")
+    .select(`
+      id,
+      invoice_number,
+      issue_date,
+      total_amount,
+      status,
+      clients ( name )
+    `)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
 
-const statusConfig = {
-  paid: { label: 'Payée', color: 'bg-green-100 text-green-700' },
-  sent: { label: 'Envoyée', color: 'bg-orange-100 text-orange-700' },
-  overdue: { label: 'En retard', color: 'bg-red-100 text-red-700' },
-  draft: { label: 'Brouillon', color: 'bg-slate-100 text-slate-700' },
-};
+  if (error) {
+    console.error("Error fetching dashboard data:", error);
+  }
 
-export default function DashboardPage() {
-  const container = useRef<HTMLDivElement>(null);
+  const safeInvoices = invoices || [];
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(".gsap-reveal", {
-        y: 20,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.1,
-        ease: "power3.out"
-      });
-    }, container);
-    return () => ctx.revert();
-  }, []);
+  let totalAmount = 0;
+  let totalPaid = 0;
+  let totalPending = 0;
+  let pendingCount = 0;
+
+  safeInvoices.forEach(inv => {
+    const amount = Number(inv.total_amount) || 0;
+    totalAmount += amount;
+    
+    if (inv.status === 'paid') {
+      totalPaid += amount;
+    } else if (inv.status === 'sent' || inv.status === 'overdue' || inv.status === 'pending') {
+      totalPending += amount;
+      pendingCount++;
+    }
+  });
+
+  const recentInvoices = safeInvoices.slice(0, 4).map(inv => ({
+    id: inv.id,
+    number: inv.invoice_number,
+    client: inv.clients?.name || "Inconnu",
+    total: Number(inv.total_amount) || 0,
+    status: inv.status,
+    issueDate: new Date(inv.issue_date).toLocaleDateString('fr-FR'),
+  }));
+
+  // Fausse donnée mensuelle pour la démo, on pourrait grouper par mois avec JS
+  const monthlyData = [
+    { name: 'Jan', total: 4000 },
+    { name: 'Fév', total: 3000 },
+    { name: 'Mar', total: 2000 },
+    { name: 'Avr', total: 2780 },
+    { name: 'Mai', total: 1890 },
+    { name: 'Juin', total: 2390 },
+    { name: 'Juil', total: Math.round(totalAmount / 1000) }, // Exemple d'injection réelle
+  ];
 
   return (
-    <div className="space-y-6" ref={container}>
-      <div className="gsap-reveal flex justify-between items-end">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Bonjour 👋</h1>
-          <p className="text-slate-500 mt-1">Voici un résumé de votre facturation ce mois-ci.</p>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="gsap-reveal p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-slate-500">Total Factures</h3>
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-              <FileText className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-slate-900">128</div>
-          <p className="text-sm text-slate-500 mt-1"><span className="text-green-600 font-medium">+12%</span> ce mois</p>
-        </div>
-
-        <div className="gsap-reveal p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-slate-500">Montant Facturé</h3>
-            <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600">
-              <DollarSign className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-slate-900">4.5M <span className="text-sm font-medium text-slate-500">FCFA</span></div>
-          <p className="text-sm text-slate-500 mt-1"><span className="text-green-600 font-medium">+8%</span> ce mois</p>
-        </div>
-
-        <div className="gsap-reveal p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-slate-500">Montant Payé</h3>
-            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-slate-900">3.2M <span className="text-sm font-medium text-slate-500">FCFA</span></div>
-          <p className="text-sm text-slate-500 mt-1">71% de recouvrement</p>
-        </div>
-
-        <div className="gsap-reveal p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-slate-500">En attente</h3>
-            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
-              <Clock className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-slate-900">1.3M <span className="text-sm font-medium text-slate-500">FCFA</span></div>
-          <p className="text-sm text-slate-500 mt-1">15 factures en attente</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart */}
-        <div className="gsap-reveal lg:col-span-2 p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-          <h3 className="font-bold text-lg mb-6 text-slate-900">Revenus annuels (FCFA)</h3>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} dx={-10} />
-                <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                <Bar dataKey="total" fill="#16a34a" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Recent Invoices */}
-        <div className="gsap-reveal p-6 bg-white rounded-xl shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-lg text-slate-900">Factures récentes</h3>
-            <button className="text-sm text-primary font-medium hover:underline">Voir tout</button>
-          </div>
-          <div className="space-y-4">
-            {recentInvoices.map((invoice) => {
-              const conf = statusConfig[invoice.status as keyof typeof statusConfig];
-              return (
-                <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
-                  <div>
-                    <div className="font-medium text-slate-900">{invoice.clientId}</div>
-                    <div className="text-xs text-slate-500">{invoice.number} • {invoice.issueDate}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium text-slate-900">{invoice.total?.toLocaleString()} FCFA</div>
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold mt-1 ${conf.color}`}>
-                      {conf.label}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
+    <DashboardClient 
+      totalInvoices={safeInvoices.length}
+      totalAmount={totalAmount}
+      totalPaid={totalPaid}
+      totalPending={totalPending}
+      pendingCount={pendingCount}
+      recentInvoices={recentInvoices}
+      monthlyData={monthlyData}
+    />
   );
 }
