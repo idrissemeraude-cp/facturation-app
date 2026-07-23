@@ -33,9 +33,9 @@ export default async function InvoicesPage() {
   const formattedInvoices = (invoices || []).map((invoice) => ({
     id: invoice.id,
     number: invoice.invoice_number,
-    client: invoice.clients?.name || "Client inconnu",
-    issueDate: new Date(invoice.issue_date).toLocaleDateString('fr-FR'),
-    dueDate: new Date(invoice.due_date).toLocaleDateString('fr-FR'),
+    client: (invoice.clients as unknown as { name?: string } | null)?.name || "Client inconnu",
+    issueDate: invoice.issue_date ? new Date(invoice.issue_date).toLocaleDateString('fr-FR') : '—',
+    dueDate: invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('fr-FR') : '—',
     amount: invoice.total_amount,
     status: invoice.status,
   }));

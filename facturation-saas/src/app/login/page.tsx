@@ -8,6 +8,7 @@ import { login, signup } from "./actions";
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -70,6 +71,7 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
     const formData = new FormData(e.currentTarget);
     
     startTransition(async () => {
@@ -78,6 +80,9 @@ export default function LoginPage() {
       if (res?.error) {
         setError(res.error);
         gsap.fromTo(formRef.current, { x: -10 }, { x: 0, duration: 0.4, ease: "elastic.out(1, 0.3)" });
+      } else if (res && 'success' in res && res.success && res.message) {
+        setSuccessMessage(res.message as string);
+        setIsLogin(true); // Switch back to login form
       }
     });
   };
@@ -108,6 +113,13 @@ export default function LoginPage() {
         <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800 rounded-[2rem] p-8 shadow-2xl reveal">
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
             
+            {successMessage && (
+              <div className="bg-primary-500/10 border border-primary-500/30 text-primary-300 p-4 rounded-xl text-sm text-center leading-relaxed">
+                <div className="font-semibold mb-1">📬 Vérifiez votre email</div>
+                {successMessage}
+              </div>
+            )}
+
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm text-center">
                 {error}

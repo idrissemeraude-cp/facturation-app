@@ -1,12 +1,11 @@
-export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
+export type InvoiceStatus = 'draft' | 'sent' | 'pending' | 'paid' | 'overdue' | 'cancelled';
 
 export interface Client {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
 }
 
 export interface InvoiceItem {

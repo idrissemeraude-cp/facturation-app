@@ -31,7 +31,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isPublicRoute = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/';
+  const isPublicRoute = 
+    request.nextUrl.pathname === '/login' || 
+    request.nextUrl.pathname === '/' ||
+    request.nextUrl.pathname === '/landing.html' ||
+    request.nextUrl.pathname.startsWith('/auth/');
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
@@ -39,7 +43,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && request.nextUrl.pathname === '/login') {
+  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/landing.html')) {
     const url = request.nextUrl.clone();
     url.pathname = '/invoices'; // Redirect to dashboard if already logged in
     return NextResponse.redirect(url);

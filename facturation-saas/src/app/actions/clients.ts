@@ -8,15 +8,13 @@ export async function addClient(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    return { error: "Non autorisé" };
   }
 
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const phone = formData.get("phone") as string;
   const address = formData.get("address") as string;
-  // Note: 'city' is combined with address or added as extra if your DB supports it.
-  // In the current SQL schema, there is no 'city' column, so we'll append it to address.
   const city = formData.get("city") as string;
   
   const fullAddress = city ? `${address}, ${city}` : address;
@@ -44,9 +42,45 @@ export async function addClient(formData: FormData) {
   return { success: true, client: data };
 }
 
+export async function updateClient(id: string, formData: FormData) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Non autorisé" };
+
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const phone = formData.get("phone") as string;
+  const address = formData.get("address") as string;
+
+  const { data, error } = await supabase
+    .from("clients")
+    .update({ name, email, phone, address })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating client:", error);
+    return { error: "Erreur lors de la modification du client." };
+  }
+
+  revalidatePath("/clients");
+  return { success: true, client: data };
+}
+
 export async function deleteClient(id: string) {
   const supabase = createClient();
-  const { error } = await supabase.from("clients").delete().eq("id", id);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Non autorisé" };
+
+  const { error } = await supabase
+    .from("clients")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
   if (error) return { error: "Erreur lors de la suppression." };
   revalidatePath("/clients");
   return { success: true };
