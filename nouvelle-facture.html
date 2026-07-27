@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>iziFacture - Facturation simple pour entrepreneurs africains</title>
+    <title>iziFacture - Nouvelle Facture</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -66,18 +66,6 @@
         opacity: 0.03;
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
       }
-      .glass-card-dark {
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-      }
-      .text-gradient {
-        background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
       .reveal {
         opacity: 0;
         visibility: hidden;
@@ -90,16 +78,13 @@
         transform: translateY(0);
       }
     
-      /* Hide scrollbar for Chrome, Safari and Opera */
       .no-scrollbar::-webkit-scrollbar {
         display: none;
       }
-      /* Hide scrollbar for IE, Edge and Firefox */
       .no-scrollbar {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
-
     </style>
   </head>
   <body
@@ -122,6 +107,23 @@
           <i data-lucide="arrow-left" class="w-4 h-4"></i>
           Retour au tableau de bord
         </button>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3 cursor-pointer">
+          <div class="text-right hidden sm:block">
+            <div class="text-sm font-bold text-slate-900" id="header-user-name">
+              Mon Entreprise
+            </div>
+            <div class="text-xs text-slate-500">Pro Plan</div>
+          </div>
+          <div
+            class="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold overflow-hidden"
+            id="header-user-avatar"
+          >
+            ME
+          </div>
+        </div>
       </div>
     </header>
 
@@ -155,11 +157,32 @@
           Tableau de bord
         </a>
         <a
-          href="#"
+          href="factures.html"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-colors group"
+        >
+          <i data-lucide="file-text" class="w-5 h-5"></i>
+          Factures
+        </a>
+        <a
+          href="nouvelle-facture.html"
           class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary-500/10 text-primary-400 font-medium transition-colors"
         >
           <i data-lucide="plus-circle" class="w-5 h-5"></i>
           Nouvelle Facture
+        </a>
+        <a
+          href="clients.html"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-colors group"
+        >
+          <i data-lucide="users" class="w-5 h-5"></i>
+          Clients
+        </a>
+        <a
+          href="parametres.html"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-colors group"
+        >
+          <i data-lucide="settings" class="w-5 h-5"></i>
+          Paramètres
         </a>
       </div>
       
@@ -175,10 +198,10 @@
             <i data-lucide="mail" class="w-4 h-4 shrink-0"></i>
             gansoreemeraude@gmail.com
           </a>
-            <a href="mailto:gicb7612@gmail.com" class="text-xs text-slate-400 hover:text-primary-400 flex items-center gap-2 mb-3 transition-colors break-all">
-              <i data-lucide="mail" class="w-4 h-4 shrink-0"></i>
-              gicb7612@gmail.com
-            </a>
+          <a href="mailto:gicb7612@gmail.com" class="text-xs text-slate-400 hover:text-primary-400 flex items-center gap-2 mb-3 transition-colors break-all">
+            <i data-lucide="mail" class="w-4 h-4 shrink-0"></i>
+            gicb7612@gmail.com
+          </a>
           <a href="tel:+22660557777" class="text-xs text-slate-400 hover:text-primary-400 flex items-center gap-2 transition-colors">
             <i data-lucide="phone" class="w-4 h-4 shrink-0"></i>
             +226 60 55 77 77
@@ -196,24 +219,25 @@
             <div
               class="bg-white rounded-3xl p-8 shadow-xl border border-slate-100"
             >
-              <!-- Header -->
+              <!-- Header Emitter Info (Auto-updated from Settings) -->
               <div
                 class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-10"
               >
                 <div class="flex items-center gap-4">
                   <div
-                    class="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-display font-bold text-2xl shadow-lg"
+                    class="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-display font-bold text-2xl shadow-lg overflow-hidden shrink-0"
+                    id="invoice-sender-avatar"
                   >
-                    TA
+                    ME
                   </div>
-                    <div>
-                      <h2 id="sender-nom" class="font-bold text-xl leading-tight text-slate-900">
-                        TechAfrica Studio
-                      </h2>
-                      <p id="sender-email" class="text-sm text-slate-500">contact@techafrica.com</p>
-                      <p id="sender-localisation" class="text-sm text-slate-500">Plateau, Abidjan</p>
-                      <p id="sender-telephone" class="text-sm text-slate-500">+225 01 23 45 67 89</p>
-                    </div>
+                  <div>
+                    <h2 id="sender-nom" class="font-bold text-xl leading-tight text-slate-900">
+                      Nom de votre entreprise
+                    </h2>
+                    <p id="sender-email" class="text-sm text-slate-500">contact@votre-entreprise.com</p>
+                    <p id="sender-localisation" class="text-sm text-slate-500">Votre adresse / ville</p>
+                    <p id="sender-telephone" class="text-sm text-slate-500">+226 XX XX XX XX</p>
+                  </div>
                 </div>
                 <div class="text-left sm:text-right w-full sm:w-auto">
                   <h1
@@ -347,13 +371,13 @@
 
                   <!-- Actions -->
                   <div class="space-y-3">
-                    <button onclick="window.location.href = 'dashboard.html'" id="send-invoice-btn" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-white bg-primary-500 hover:bg-primary-600 shadow-glow transition-all">
+                    <button onclick="window.location.href = 'factures.html'" id="send-invoice-btn" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-white bg-primary-500 hover:bg-primary-600 shadow-glow transition-all">
                       <i data-lucide="send" class="w-4 h-4 mr-2"></i> Créer & Envoyer
                     </button>
-                    <button onclick="alert('Brouillon enregistré avec succès (démo) !')" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
+                    <button onclick="alert('Brouillon enregistré avec succès !')" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
                       <i data-lucide="save" class="w-4 h-4 mr-2"></i> Enregistrer
                     </button>
-                    <button onclick="alert('Lien de partage copié dans le presse-papiers (démo) !')" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-all">
+                    <button onclick="alert('Lien de partage copié dans le presse-papiers !')" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-all">
                       <i data-lucide="share-2" class="w-4 h-4 mr-2"></i> Partager
                     </button>
                   </div>
@@ -366,8 +390,67 @@
     </main>
     
     <script>
+      function getInitials(name) {
+        if (!name || !name.trim()) return "ME";
+        const words = name.trim().split(/\s+/).filter(w => w.length > 0);
+        if (words.length === 0) return "ME";
+        if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+        const first = words[0][0];
+        let lastIndex = words.length - 1;
+        if (words.length > 2 && (words[1].toLowerCase() === 'et' || words[1] === '&')) {
+          lastIndex = 2;
+        }
+        const last = words[lastIndex][0];
+        return (first + last).toUpperCase();
+      }
+
+      function loadInvoiceEmitter() {
+        let nom = localStorage.getItem('param_nom');
+        let email = localStorage.getItem('param_email');
+        let loc = localStorage.getItem('param_localisation');
+        let tel = localStorage.getItem('param_telephone');
+        let logo = localStorage.getItem('param_logo');
+
+        if (!nom || !email) {
+          const savedJson = localStorage.getItem('invoiceIssuerSettings');
+          if (savedJson) {
+            try {
+              const parsed = JSON.parse(savedJson);
+              if (!nom && parsed.companyName) nom = parsed.companyName;
+              if (!email && parsed.email) email = parsed.email;
+              if (!loc && parsed.address) loc = parsed.address;
+              if (!tel && parsed.phone) tel = parsed.phone;
+            } catch (e) {}
+          }
+        }
+
+        if (!logo) {
+          logo = localStorage.getItem('invoiceIssuerLogo');
+        }
+
+        const senderNomEl = document.getElementById('sender-nom');
+        const senderEmailEl = document.getElementById('sender-email');
+        const senderLocEl = document.getElementById('sender-localisation');
+        const senderTelEl = document.getElementById('sender-telephone');
+        const senderAvatarEl = document.getElementById('invoice-sender-avatar');
+
+        if (senderNomEl) senderNomEl.textContent = (nom && nom.trim()) ? nom : 'Nom de votre entreprise';
+        if (senderEmailEl) senderEmailEl.textContent = (email && email.trim()) ? email : 'contact@votre-entreprise.com';
+        if (senderLocEl) senderLocEl.textContent = (loc && loc.trim()) ? loc : 'Votre adresse / ville';
+        if (senderTelEl) senderTelEl.textContent = (tel && tel.trim()) ? tel : '+226 XX XX XX XX';
+
+        if (senderAvatarEl) {
+          if (logo) {
+            senderAvatarEl.innerHTML = '<img src="' + logo + '" alt="Logo" class="w-full h-full object-cover rounded-2xl" />';
+          } else {
+            senderAvatarEl.textContent = getInitials(nom || 'Mon Entreprise');
+          }
+        }
+      }
+
       // Populate current date
-      document.getElementById("current-date").valueAsDate = new Date();
+      const dateEl = document.getElementById("current-date");
+      if (dateEl) dateEl.valueAsDate = new Date();
 
       let invoiceItems = [{ id: 1, desc: "", qty: 1, price: 0 }];
 
@@ -442,13 +525,11 @@
       }
 
       document.addEventListener("DOMContentLoaded", () => {
+        loadInvoiceEmitter();
         renderInvoiceItems();
+        lucide.createIcons();
       });
-    </script>
 
-    <script>
-      lucide.createIcons();
-      // Basic GSAP reveal logic
       if (typeof gsap !== "undefined") {
         gsap.registerPlugin(ScrollTrigger);
         document.querySelectorAll(".reveal").forEach((el) => {
@@ -462,7 +543,7 @@
           });
         });
       }
-    
+
       function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
         const overlay = document.getElementById("sidebar-overlay");
@@ -477,21 +558,7 @@
           overlay.classList.remove("opacity-100");
           overlay.classList.add("opacity-0", "pointer-events-none");
         }
-        }
       }
-
-      // Load parameters from localStorage
-      window.addEventListener('DOMContentLoaded', () => {
-        const nom = localStorage.getItem('param_nom');
-        const email = localStorage.getItem('param_email');
-        const loc = localStorage.getItem('param_localisation');
-        const tel = localStorage.getItem('param_telephone');
-        
-        if (nom && document.getElementById('sender-nom')) document.getElementById('sender-nom').innerText = nom;
-        if (email && document.getElementById('sender-email')) document.getElementById('sender-email').innerText = email;
-        if (loc && document.getElementById('sender-localisation')) document.getElementById('sender-localisation').innerText = loc;
-        if (tel && document.getElementById('sender-telephone')) document.getElementById('sender-telephone').innerText = tel;
-      });
     </script>
   </body>
 </html>

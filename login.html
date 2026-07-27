@@ -295,5 +295,46 @@
         });
       }
     </script>
-  </body>
+  
+<script>
+  (function() {
+    function getInitials(name) {
+      if (!name || !name.trim()) return "ME";
+      const words = name.trim().split(/\s+/).filter(w => w.length > 0);
+      if (words.length === 0) return "ME";
+      if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+      const first = words[0][0];
+      let lastIndex = words.length - 1;
+      if (words.length > 2 && (words[1].toLowerCase() === 'et' || words[1] === '&')) {
+        lastIndex = 2;
+      }
+      const last = words[lastIndex][0];
+      return (first + last).toUpperCase();
+    }
+    function initHeader() {
+      const nom = localStorage.getItem('param_nom') || 'Mon Entreprise';
+      const logo = localStorage.getItem('param_logo');
+      const initials = getInitials(nom);
+
+      const headerNameEl = document.getElementById('header-user-name');
+      if (headerNameEl) headerNameEl.textContent = nom;
+
+      const headerAvatarEl = document.getElementById('header-user-avatar');
+      if (headerAvatarEl) {
+        if (logo) {
+          headerAvatarEl.innerHTML = '<img src="' + logo + '" alt="Logo" class="w-full h-full object-cover rounded-full" />';
+        } else {
+          headerAvatarEl.textContent = initials;
+        }
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initHeader);
+    } else {
+      initHeader();
+    }
+  })();
+</script>
+
+</body>
 </html>
