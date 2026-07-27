@@ -160,11 +160,11 @@
             >
           </div>
 
+          <div id="login-msg" class="hidden"></div>
+
           <form
-            onsubmit="
-              event.preventDefault();
-              window.location.href = 'dashboard.html';
-            "
+            id="login-form"
+            onsubmit="handleSupabaseLogin(event);"
             class="space-y-4"
           >
             <div>
@@ -172,6 +172,7 @@
                 >Adresse email</label
               >
               <input
+                id="login-email"
                 type="email"
                 placeholder="nom@entreprise.com"
                 class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-slate-400"
@@ -181,7 +182,7 @@
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="block text-sm font-medium text-slate-700"
-                  >Mot de passe</label
+                  >Mot de passe (optionnel)</label
                 >
                 <a
                   href="#"
@@ -190,10 +191,10 @@
                 >
               </div>
               <input
+                id="login-password"
                 type="password"
                 placeholder="••••••••"
                 class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-slate-400"
-                required
               />
             </div>
 
@@ -201,7 +202,7 @@
               type="submit"
               class="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium transition-colors shadow-lg mt-6"
             >
-              Se connecter
+              Se connecter (Envoyer l'email)
             </button>
           </form>
 
@@ -296,6 +297,67 @@
       }
     </script>
   
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://ewixmsirdmijbrppufpv.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_ClBx2KUGdeL8G5ZOf0x4UA_jU9yY4xv";
+  let supabaseClient = null;
+  try {
+    if (window.supabase) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  } catch (e) {
+    console.error("Supabase init error:", e);
+  }
+
+  async function handleSupabaseLogin(e) {
+    e.preventDefault();
+    const emailInput = document.getElementById('login-email');
+    const email = emailInput ? emailInput.value.trim() : "";
+    const msgEl = document.getElementById('login-msg');
+
+    if (!email) {
+      if (msgEl) {
+        msgEl.className = "bg-red-50 text-red-600 border border-red-200 p-3 rounded-xl text-sm mb-4 text-center block";
+        msgEl.textContent = "Veuillez entrer votre adresse email.";
+      }
+      return;
+    }
+
+    if (msgEl) {
+      msgEl.className = "bg-blue-50 text-blue-600 border border-blue-200 p-3 rounded-xl text-sm mb-4 text-center block font-medium animate-pulse";
+      msgEl.textContent = "⏳ Envoi de l'email d'authentification en cours...";
+    }
+
+    if (supabaseClient) {
+      const { error } = await supabaseClient.auth.signInWithOtp({
+        email: email,
+        options: {
+          emailRedirectTo: window.location.origin + '/dashboard.html'
+        }
+      });
+
+      if (error) {
+        console.error("Supabase OTP Error:", error);
+        if (msgEl) {
+          msgEl.className = "bg-red-50 text-red-600 border border-red-200 p-3 rounded-xl text-sm mb-4 text-center block";
+          if (error.message.includes("rate limit") || error.status === 429) {
+            msgEl.textContent = "⚠️ Quota d'emails Supabase temporairement atteint. Veuillez patienter 15 minutes ou vérifier vos Spams.";
+          } else {
+            msgEl.textContent = "Erreur: " + error.message;
+          }
+        }
+        return;
+      }
+    }
+
+    if (msgEl) {
+      msgEl.className = "bg-emerald-50 border border-emerald-300 text-emerald-800 p-4 rounded-xl text-sm mb-4 text-center block leading-relaxed";
+      msgEl.innerHTML = "📩 <strong>Email d'authentification envoyé avec succès !</strong><br><br>Consultez votre boîte mail (et vérifiez vos <u>Spams</u>) à l'adresse <strong>" + email + "</strong>.<br>Cliquez sur le lien reçu pour ouvrir votre tableau de bord.";
+    }
+  }
+</script>
+
 <script>
   (function() {
     function getInitials(name) {
