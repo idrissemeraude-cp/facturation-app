@@ -279,6 +279,42 @@
       </div>
     </main>
 
+    <!-- OTP Code 6-Digit Verification Modal -->
+    <div id="otp-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden transition-all duration-300">
+      <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl border border-slate-200 text-center relative">
+        <button onclick="closeOtpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100">&times;</button>
+        
+        <div class="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary-600 shadow-glow">
+          <i data-lucide="shield-check" class="w-8 h-8"></i>
+        </div>
+
+        <h3 class="text-2xl font-bold font-display text-slate-900 mb-2">Code de vérification</h3>
+        <p class="text-sm text-slate-500 mb-6 leading-relaxed">
+          Un code de sécurité à 6 chiffres a été envoyé à <br><strong id="otp-target-email" class="text-slate-900 font-semibold">votre.email@exemple.com</strong>.
+        </p>
+
+        <div id="otp-error" class="hidden bg-red-50 text-red-600 border border-red-200 p-3 rounded-xl text-xs mb-4 text-center font-medium"></div>
+
+        <!-- 6 Digit Input Boxes -->
+        <div class="flex justify-between gap-2 mb-6 max-w-xs mx-auto">
+          <input type="text" maxlength="1" class="otp-box w-11 h-14 text-center text-2xl font-bold font-mono border-2 border-slate-200 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all" />
+          <input type="text" maxlength="1" class="otp-box w-11 h-14 text-center text-2xl font-bold font-mono border-2 border-slate-200 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all" />
+          <input type="text" maxlength="1" class="otp-box w-11 h-14 text-center text-2xl font-bold font-mono border-2 border-slate-200 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all" />
+          <input type="text" maxlength="1" class="otp-box w-11 h-14 text-center text-2xl font-bold font-mono border-2 border-slate-200 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all" />
+          <input type="text" maxlength="1" class="otp-box w-11 h-14 text-center text-2xl font-bold font-mono border-2 border-slate-200 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all" />
+          <input type="text" maxlength="1" class="otp-box w-11 h-14 text-center text-2xl font-bold font-mono border-2 border-slate-200 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all" />
+        </div>
+
+        <button id="btn-verify-otp" onclick="submitOtpCode()" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all shadow-lg flex items-center justify-center gap-2">
+          Valider le code & Se connecter
+        </button>
+
+        <p class="text-xs text-slate-400 mt-4">
+          Vous n'avez pas reçu le code ? <a href="#" onclick="handleSupabaseLogin(event)" class="text-primary-600 hover:underline font-medium">Renvoyer</a>
+        </p>
+      </div>
+    </div>
+
     <script>
       lucide.createIcons();
       // Basic GSAP reveal logic
@@ -302,12 +338,104 @@
   const SUPABASE_URL = "https://ewixmsirdmijbrppufpv.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_ClBx2KUGdeL8G5ZOf0x4UA_jU9yY4xv";
   let supabaseClient = null;
+  let currentTargetEmail = "";
+
   try {
     if (window.supabase) {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
   } catch (e) {
     console.error("Supabase init error:", e);
+  }
+
+  function openOtpModal(email) {
+    currentTargetEmail = email;
+    const modal = document.getElementById('otp-modal');
+    const emailTarget = document.getElementById('otp-target-email');
+    if (emailTarget) emailTarget.textContent = email;
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    // Clear boxes & focus first
+    const boxes = document.querySelectorAll('.otp-box');
+    boxes.forEach(b => b.value = '');
+    if (boxes[0]) boxes[0].focus();
+  }
+
+  function closeOtpModal() {
+    const modal = document.getElementById('otp-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  // Setup auto-advance for OTP boxes
+  document.addEventListener('DOMContentLoaded', () => {
+    const boxes = document.querySelectorAll('.otp-box');
+    boxes.forEach((box, idx) => {
+      box.addEventListener('input', (e) => {
+        if (box.value && idx < boxes.length - 1) {
+          boxes[idx + 1].focus();
+        }
+        // Auto-verify when all 6 filled
+        const code = Array.from(boxes).map(b => b.value).join('');
+        if (code.length === 6) {
+          submitOtpCode();
+        }
+      });
+
+      box.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !box.value && idx > 0) {
+          boxes[idx - 1].focus();
+        }
+      });
+    });
+  });
+
+  async function submitOtpCode() {
+    const boxes = document.querySelectorAll('.otp-box');
+    const code = Array.from(boxes).map(b => b.value).join('');
+    const errorEl = document.getElementById('otp-error');
+    const btn = document.getElementById('btn-verify-otp');
+
+    if (code.length < 6) {
+      if (errorEl) {
+        errorEl.classList.remove('hidden');
+        errorEl.textContent = "Veuillez entrer les 6 chiffres du code.";
+      }
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Vérification en cours...";
+    }
+
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient.auth.verifyOtp({
+        email: currentTargetEmail,
+        token: code,
+        type: 'email'
+      });
+
+      if (error) {
+        console.error("OTP Verification Error:", error);
+        if (errorEl) {
+          errorEl.classList.remove('hidden');
+          errorEl.textContent = "Code incorrect ou expiré. Vérifiez le code reçu par email.";
+        }
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Valider le code & Se connecter";
+        }
+        return;
+      }
+    }
+
+    // Success -> Redirect to dashboard!
+    window.location.href = 'dashboard.html';
   }
 
   async function handleSupabaseLogin(e) {
@@ -326,14 +454,14 @@
 
     if (msgEl) {
       msgEl.className = "bg-blue-50 text-blue-600 border border-blue-200 p-3 rounded-xl text-sm mb-4 text-center block font-medium animate-pulse";
-      msgEl.textContent = "⏳ Envoi de l'email d'authentification en cours...";
+      msgEl.textContent = "⏳ Envoi du code à 6 chiffres par email...";
     }
 
     if (supabaseClient) {
       const { error } = await supabaseClient.auth.signInWithOtp({
         email: email,
         options: {
-          emailRedirectTo: window.location.origin + '/dashboard.html'
+          shouldCreateUser: true
         }
       });
 
@@ -342,7 +470,7 @@
         if (msgEl) {
           msgEl.className = "bg-red-50 text-red-600 border border-red-200 p-3 rounded-xl text-sm mb-4 text-center block";
           if (error.message.includes("rate limit") || error.status === 429) {
-            msgEl.textContent = "⚠️ Quota d'emails Supabase temporairement atteint. Veuillez patienter 15 minutes ou vérifier vos Spams.";
+            msgEl.textContent = "⚠️ Quota d'emails temporairement atteint. Attendez quelques minutes et réessayez.";
           } else {
             msgEl.textContent = "Erreur: " + error.message;
           }
@@ -352,9 +480,11 @@
     }
 
     if (msgEl) {
-      msgEl.className = "bg-emerald-50 border border-emerald-300 text-emerald-800 p-4 rounded-xl text-sm mb-4 text-center block leading-relaxed";
-      msgEl.innerHTML = "📩 <strong>Email d'authentification envoyé avec succès !</strong><br><br>Consultez votre boîte mail (et vérifiez vos <u>Spams</u>) à l'adresse <strong>" + email + "</strong>.<br>Cliquez sur le lien reçu pour ouvrir votre tableau de bord.";
+      msgEl.className = "hidden";
     }
+
+    // Open OTP 6-Digit Modal immediately!
+    openOtpModal(email);
   }
 </script>
 
