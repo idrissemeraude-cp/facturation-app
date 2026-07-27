@@ -82,3 +82,58 @@ export async function signup(formData: FormData) {
   revalidatePath("/", "layout");
   redirect("/invoices");
 }
+
+export async function sendMagicLink(formData: FormData) {
+  const supabase = createClient();
+  const email = (formData.get("email") as string || "").trim().toLowerCase();
+
+  if (!email) {
+    return { error: "Veuillez saisir votre adresse email." };
+  }
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/confirm`,
+    },
+  });
+
+  if (error) {
+    console.error("SUPABASE MAGIC LINK ERROR:", error.message);
+    if (error.message.includes("Signups not allowed") || error.message.includes("not found")) {
+      return { error: "Aucun compte trouvé avec cet email. Veuillez d'abord créer un compte." };
+    }
+    return { error: `Erreur d'envoi: ${error.message}` };
+  }
+
+  return {
+    success: true,
+    message: `📧 Un email d'authentification a été envoyé à ${email}. Cliquez sur le lien dans votre boîte mail ou saisissez le code reçu pour vous connecter.`,
+    emailSent: email,
+  };
+}
+
+export async function verifyOtp(formData: FormData) {
+  const supabase = createClient();
+  const email = (formData.get("email") as string || "").trim().toLowerCase();
+  const token = (formData.get("code") as string || "").trim();
+
+  if (!email || !token) {
+    return { error: "Veuillez saisir votre email et le code de vérification." };
+  }
+
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",
+  });
+
+  if (error) {
+    return { error: "Code de vérification invalide ou expiré. Vérifiez votre email et réessayez." };
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/invoices");
+}
+
