@@ -91,25 +91,34 @@ export async function sendMagicLink(formData: FormData) {
     return { error: "Veuillez saisir votre adresse email." };
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      shouldCreateUser: false,
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/confirm`,
+      shouldCreateUser: true,
+      emailRedirectTo: `${siteUrl}/auth/confirm`,
     },
   });
 
   if (error) {
-    console.error("SUPABASE MAGIC LINK ERROR:", error.message);
-    if (error.message.includes("Signups not allowed") || error.message.includes("not found")) {
-      return { error: "Aucun compte trouvé avec cet email. Veuillez d'abord créer un compte." };
+    console.error("SUPABASE MAGIC LINK ERROR:", error.message, error.status);
+    if (
+      error.message.includes("rate limit") ||
+      error.message.includes("over_email_send_rate_limit") ||
+      error.status === 429
+    ) {
+      return {
+        error: "Trop de tentatives d'envoi d'email. Le quota d'emails Supabase par heure est temporairement atteint. Attendez 15 à 30 minutes ou vérifiez vos Spams.",
+      };
     }
     return { error: `Erreur d'envoi: ${error.message}` };
   }
 
   return {
     success: true,
-    message: `📧 Un email d'authentification a été envoyé à ${email}. Cliquez sur le lien dans votre boîte mail ou saisissez le code reçu pour vous connecter.`,
+    message: `📧 Un email d'authentification a été envoyé à ${email}. Consultez votre boîte mail (et vérifiez le dossier SPAMS) et cliquez sur le lien.`,
     emailSent: email,
   };
 }
