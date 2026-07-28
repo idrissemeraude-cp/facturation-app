@@ -290,15 +290,7 @@
         const tbody = document.getElementById('clients-tbody');
         if (!tbody) return;
 
-        const saved = JSON.parse(localStorage.getItem('saved_clients') || '[]');
-
-        const defaultClients = [
-          { id: 'cli_1', name: 'TechAfrica Studio (Amadou Fall)', email: 'amadou@techafrica.com', phone: '+226 70 12 34 56', address: 'Ouagadougou' },
-          { id: 'cli_2', name: 'Ivoire Commerce (Kouamé)', email: 'contact@ivoirecom.ci', phone: '+225 07 89 01 23', address: 'Abidjan' },
-          { id: 'cli_3', name: 'Dakar Digital (Fatou Ndiaye)', email: 'fatou@dakardigital.sn', phone: '+221 77 456 78 90', address: 'Dakar' }
-        ];
-
-        const allClients = saved.length > 0 ? saved : defaultClients;
+        const allClients = JSON.parse(localStorage.getItem('saved_clients') || '[]');
 
         tbody.innerHTML = '';
         if (allClients.length === 0) {

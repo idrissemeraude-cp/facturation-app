@@ -284,15 +284,7 @@
         const tbody = document.getElementById('invoices-tbody');
         if (!tbody) return;
 
-        const saved = JSON.parse(localStorage.getItem('saved_invoices') || '[]');
-
-        const defaultInvoices = [
-          { id: 'inv_1', number: 'FAC-2024-001', client: 'Amadou Fall (TechAfrica Studio)', date: '2024-03-20', total: 150000, status: 'Payée' },
-          { id: 'inv_2', number: 'FAC-2024-002', client: 'Kouamé Kouassi (Ivoire Commerce)', date: '2024-03-22', total: 45000, status: 'En attente' },
-          { id: 'inv_3', number: 'FAC-2024-003', client: 'Fatou Ndiaye (Dakar Digital)', date: '2024-03-25', total: 85000, status: 'En retard' }
-        ];
-
-        const allInvoices = saved.length > 0 ? saved : defaultInvoices;
+        const allInvoices = JSON.parse(localStorage.getItem('saved_invoices') || '[]');
 
         tbody.innerHTML = '';
         if (allInvoices.length === 0) {

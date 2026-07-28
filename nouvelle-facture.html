@@ -459,27 +459,24 @@
         if (!tbody) return;
         tbody.innerHTML = "";
 
-        let subtotal = 0;
-
         invoiceItems.forEach((item) => {
-          const total = item.qty * item.price;
-          subtotal += total;
+          const total = (item.qty || 1) * (item.price || 0);
 
           const tr = document.createElement("tr");
           tr.className = "border-b border-slate-100 group";
           tr.innerHTML = `
-            <td class="py-4">
-              <input type="text" value="${item.desc}" onchange="updateItem(${item.id}, 'desc', this.value)" class="w-full text-slate-900 font-medium outline-none border-b border-transparent focus:border-primary-500 transition-colors bg-transparent placeholder-slate-300" placeholder="Description de l'article" />
+            <td class="py-3">
+              <input type="text" value="${item.desc || ''}" oninput="updateItem(${item.id}, 'desc', this.value)" class="w-full text-slate-900 font-medium outline-none border border-slate-200 focus:border-primary-500 rounded-lg p-2.5 bg-slate-50 focus:bg-white transition-colors placeholder-slate-400" placeholder="Description de la prestation" />
             </td>
-            <td class="py-4">
-              <input type="number" value="${item.qty}" min="1" onchange="updateItem(${item.id}, 'qty', this.value)" class="w-16 text-center text-slate-900 outline-none border-b border-transparent focus:border-primary-500 transition-colors mx-auto block bg-transparent" />
+            <td class="py-3">
+              <input type="number" value="${item.qty || 1}" min="1" oninput="updateItem(${item.id}, 'qty', this.value)" class="w-20 text-center text-slate-900 outline-none border border-slate-200 focus:border-primary-500 rounded-lg p-2.5 bg-slate-50 focus:bg-white font-bold transition-colors mx-auto block" />
             </td>
-            <td class="py-4 text-right">
-              <input type="number" value="${item.price}" min="0" onchange="updateItem(${item.id}, 'price', this.value)" class="w-28 text-right text-slate-900 outline-none border-b border-transparent focus:border-primary-500 transition-colors inline-block bg-transparent" />
+            <td class="py-3 text-right">
+              <input type="number" value="${item.price || 0}" min="0" step="100" oninput="updateItem(${item.id}, 'price', this.value)" class="w-32 text-right text-slate-900 outline-none border border-slate-200 focus:border-primary-500 rounded-lg p-2.5 bg-slate-50 focus:bg-white font-bold transition-colors inline-block placeholder-slate-400" placeholder="0" />
             </td>
-            <td class="py-4 text-right font-mono font-medium text-slate-900">${new Intl.NumberFormat("fr-FR").format(total)}</td>
-            <td class="py-4 text-right">
-              <button onclick="removeInvoiceItem(${item.id})" class="text-slate-300 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100">
+            <td id="item-total-${item.id}" class="py-3 text-right font-mono font-bold text-slate-900 px-2">${new Intl.NumberFormat("fr-FR").format(total)}</td>
+            <td class="py-3 text-right">
+              <button type="button" onclick="removeInvoiceItem(${item.id})" class="text-slate-300 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
               </button>
             </td>
@@ -487,15 +484,7 @@
           tbody.appendChild(tr);
         });
 
-        const tax = subtotal * 0.18;
-        const totalTTC = subtotal + tax;
-
-        document.getElementById("summary-subtotal").innerText =
-          new Intl.NumberFormat("fr-FR").format(subtotal);
-        document.getElementById("summary-tax").innerText =
-          new Intl.NumberFormat("fr-FR").format(tax);
-        document.getElementById("summary-total").innerText =
-          new Intl.NumberFormat("fr-FR").format(totalTTC);
+        recalculateTotals();
 
         if (window.lucide) {
           lucide.createIcons();
@@ -506,20 +495,40 @@
         const item = invoiceItems.find((i) => i.id === id);
         if (item) {
           item[field] = field === "desc" ? value : Number(value);
-          renderInvoiceItems();
+          const totalCell = document.getElementById(`item-total-${id}`);
+          if (totalCell) {
+            const tot = (item.qty || 1) * (item.price || 0);
+            totalCell.innerText = new Intl.NumberFormat("fr-FR").format(tot);
+          }
+          recalculateTotals();
         }
       }
 
+      function recalculateTotals() {
+        let subtotal = 0;
+        invoiceItems.forEach((item) => {
+          subtotal += (item.qty || 1) * (item.price || 0);
+        });
+        const tax = subtotal * 0.18;
+        const totalTTC = subtotal + tax;
+
+        const subEl = document.getElementById("summary-subtotal");
+        const taxEl = document.getElementById("summary-tax");
+        const totEl = document.getElementById("summary-total");
+
+        if (subEl) subEl.innerText = new Intl.NumberFormat("fr-FR").format(subtotal);
+        if (taxEl) taxEl.innerText = new Intl.NumberFormat("fr-FR").format(tax);
+        if (totEl) totEl.innerText = new Intl.NumberFormat("fr-FR").format(totalTTC);
+      }
+
       function addInvoiceRow() {
-        const newId =
-          invoiceItems.length > 0
-            ? Math.max(...invoiceItems.map((i) => i.id)) + 1
-            : 1;
+        const newId = invoiceItems.length > 0 ? Math.max(...invoiceItems.map((i) => i.id)) + 1 : 1;
         invoiceItems.push({ id: newId, desc: "", qty: 1, price: 0 });
         renderInvoiceItems();
       }
 
       function removeInvoiceItem(id) {
+        if (invoiceItems.length <= 1) return;
         invoiceItems = invoiceItems.filter((i) => i.id !== id);
         renderInvoiceItems();
       }
