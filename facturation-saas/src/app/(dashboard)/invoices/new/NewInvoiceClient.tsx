@@ -71,8 +71,8 @@ export default function NewInvoicePageClient({ clients: initialClients, suggeste
     { id: 1, description: "", quantity: 1, price: 0 }
   ]);
 
-  // Infos émetteur depuis localStorage
-  const [issuer, setIssuer] = useState({ companyName: "", email: "", phone: "", address: "" });
+  // Infos émetteur depuis localStorage avec valeurs par défaut d'entreprise
+  const [issuer, setIssuer] = useState({ companyName: "Cheick", email: "gicb7612@gmail.com", phone: "+226 60 55 77 77", address: "Dédougou" });
   useEffect(() => {
     let nom = localStorage.getItem("param_nom") || "";
     let email = localStorage.getItem("param_email") || "";
@@ -91,7 +91,12 @@ export default function NewInvoicePageClient({ clients: initialClients, suggeste
         } catch (e) {}
       }
     }
-    setIssuer({ companyName: nom, email, phone, address });
+    setIssuer({
+      companyName: nom || "Cheick",
+      email: email || "gicb7612@gmail.com",
+      phone: phone || "+226 60 55 77 77",
+      address: address || "Dédougou"
+    });
   }, []);
 
   const selectedClient = clientsList.find(c => c.id === selectedClientId);

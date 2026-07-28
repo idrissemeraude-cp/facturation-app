@@ -479,6 +479,21 @@
           }
         }
 
+        // If still empty, default to user's company profile
+        if (!nom) nom = "Cheick";
+        if (!email) email = "gicb7612@gmail.com";
+        if (!loc) loc = "Dédougou";
+        if (!tel) tel = "+226 60 55 77 77";
+
+        // Save defaults so it persists across all pages
+        localStorage.setItem('param_nom', nom);
+        localStorage.setItem('param_email', email);
+        localStorage.setItem('param_localisation', loc);
+        localStorage.setItem('param_telephone', tel);
+        localStorage.setItem('invoiceIssuerSettings', JSON.stringify({
+          companyName: nom, email: email, address: loc, phone: tel
+        }));
+
         if (!logo) {
           logo = localStorage.getItem('invoiceIssuerLogo');
         }
@@ -497,10 +512,8 @@
         if (senderAvatarEl) {
           if (logo) {
             senderAvatarEl.innerHTML = '<img src="' + logo + '" alt="Logo" class="w-full h-full object-cover rounded-2xl" />';
-          } else if (nom) {
-            senderAvatarEl.textContent = getInitials(nom);
           } else {
-            senderAvatarEl.textContent = 'ME';
+            senderAvatarEl.textContent = getInitials(nom);
           }
         }
       }
