@@ -173,8 +173,8 @@ export default function NewInvoicePageClient({ clients: initialClients, suggeste
         setSaveError(result.error);
       } else {
         setSaveSuccess(true);
-        if (result.invoice) {
-          setCreatedInvoiceId(result.invoice.id);
+        if (result.invoiceId) {
+          setCreatedInvoiceId(result.invoiceId);
         }
         if (andShare) {
           setIsShareModalOpen(true);
