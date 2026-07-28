@@ -247,12 +247,12 @@ export default function ClientList({ initialClients }: { initialClients: Client[
                 <input required type="text" name="name" className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-slate-900" placeholder="Ex: TechAfrica SARL" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Adresse e-mail *</label>
-                <input required type="email" name="email" className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-slate-900" placeholder="contact@email.com" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Adresse e-mail</label>
+                <input type="email" name="email" className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-slate-900" placeholder="contact@email.com" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Téléphone *</label>
-                <input required type="tel" name="phone" className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-slate-900" placeholder="+221 77 000 00 00" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Téléphone</label>
+                <input type="tel" name="phone" className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-slate-900" placeholder="+221 77 000 00 00" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
