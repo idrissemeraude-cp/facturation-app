@@ -39,8 +39,11 @@ export default function HelpPage() {
             n'hésitez pas à nous joindre directement via ces coordonnées.
           </p>
           
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-slate-100 transition-colors group cursor-pointer">
+          <div className="space-y-4">
+            <a 
+              href="mailto:gansoreemeraude@gmail.com"
+              className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-slate-100 transition-colors group cursor-pointer"
+            >
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-slate-400 group-hover:text-primary-600 transition-colors">
                 <Mail className="w-5 h-5" />
               </div>
@@ -48,17 +51,35 @@ export default function HelpPage() {
                 <div className="text-sm font-medium text-slate-900">Adresse e-mail</div>
                 <div className="text-slate-500">gansoreemeraude@gmail.com</div>
               </div>
-            </div>
+            </a>
 
-            <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-slate-100 transition-colors group cursor-pointer">
+            <a 
+              href="tel:+22660557777"
+              className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-slate-100 transition-colors group cursor-pointer"
+            >
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-slate-400 group-hover:text-primary-600 transition-colors">
                 <Phone className="w-5 h-5" />
               </div>
               <div>
                 <div className="text-sm font-medium text-slate-900">Téléphone</div>
-                <div className="text-slate-500">60 55 77 77</div>
+                <div className="text-slate-500">+226 60 55 77 77</div>
               </div>
-            </div>
+            </a>
+
+            <a 
+              href="https://wa.me/22660557777"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 p-4 rounded-xl border border-green-100 bg-green-50 hover:bg-green-100 transition-colors group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-green-600 group-hover:scale-110 transition-transform">
+                <MessageCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-slate-900">WhatsApp Support</div>
+                <div className="text-xs text-green-700 font-medium">Discuter directement avec notre assistance</div>
+              </div>
+            </a>
           </div>
         </div>
 
@@ -73,20 +94,30 @@ export default function HelpPage() {
           </p>
           
           <div className="space-y-4">
-            <button className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors text-left group">
+            <a 
+              href="https://wa.me/22660557777?text=Bonjour,%20j%27aimerais%20en%20savoir%20plus%20sur%20le%20Guide%20de%20d%C3%A9marrage%20iziFacture."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors text-left group"
+            >
               <div className="flex items-center gap-3">
                 <BookOpen className="w-5 h-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
                 <span className="font-medium text-slate-700 group-hover:text-slate-900">Guide de démarrage</span>
               </div>
               <span className="text-slate-400 text-sm">→</span>
-            </button>
-            <button className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors text-left group">
+            </a>
+            <a 
+              href="https://wa.me/22660557777?text=Bonjour,%20j%27ai%20une%20question%20sur%20iziFacture."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors text-left group"
+            >
               <div className="flex items-center gap-3">
                 <MessageCircle className="w-5 h-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
                 <span className="font-medium text-slate-700 group-hover:text-slate-900">Foire aux questions (FAQ)</span>
               </div>
               <span className="text-slate-400 text-sm">→</span>
-            </button>
+            </a>
           </div>
         </div>
       </div>

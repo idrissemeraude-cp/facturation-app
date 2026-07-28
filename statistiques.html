@@ -257,8 +257,8 @@
                 +12.5%
               </span>
             </div>
-            <p class="text-sm font-medium text-slate-500 mb-1">Chiffre d'Affaires</p>
-            <h3 class="text-2xl font-display font-bold text-slate-900">0 FCFA</h3>
+            <p class="text-sm font-medium text-slate-500 mb-1">Chiffre d'Affaires Total</p>
+            <h3 id="stat-total-revenue" class="text-2xl font-display font-bold text-slate-900">0 FCFA</h3>
           </div>
 
           <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
@@ -266,12 +266,12 @@
               <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <i data-lucide="check-circle" class="w-6 h-6"></i>
               </div>
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                45 factures
+              <span id="stat-paid-count" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                0 factures
               </span>
             </div>
             <p class="text-sm font-medium text-slate-500 mb-1">Factures Payées</p>
-            <h3 class="text-2xl font-display font-bold text-slate-900">0 FCFA</h3>
+            <h3 id="stat-paid-total" class="text-2xl font-display font-bold text-slate-900">0 FCFA</h3>
           </div>
 
           <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
@@ -279,21 +279,21 @@
               <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center">
                 <i data-lucide="clock" class="w-6 h-6"></i>
               </div>
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                12 factures
+              <span id="stat-pending-count" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                0 factures
               </span>
             </div>
             <p class="text-sm font-medium text-slate-500 mb-1">En attente</p>
-            <h3 class="text-2xl font-display font-bold text-slate-900">0 FCFA</h3>
+            <h3 id="stat-pending-total" class="text-2xl font-display font-bold text-slate-900">0 FCFA</h3>
           </div>
         </div>
 
         <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-8 reveal active">
            <h2 class="font-bold text-slate-900 mb-6">Évolution des revenus</h2>
            <div class="h-64 w-full flex items-end gap-2 justify-between mt-4">
-             <!-- Fake Chart Bars -->
+             <!-- Dynamic Revenue Bars -->
              <div class="w-full bg-primary-100 rounded-t-lg relative group h-24 hover:bg-primary-200 transition-colors cursor-pointer"><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">Jan</div></div>
-             <div class="w-full bg-primary-100 rounded-t-lg relative group h-32 hover:bg-primary-200 transition-colors cursor-pointer"><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">Fev</div></div>
+             <div class="w-full bg-primary-100 rounded-t-lg relative group h-32 hover:bg-primary-200 transition-colors cursor-pointer"><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">Fév</div></div>
              <div class="w-full bg-primary-500 rounded-t-lg relative group h-48 hover:bg-primary-600 transition-colors cursor-pointer shadow-glow"><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">Mar</div></div>
              <div class="w-full bg-primary-100 rounded-t-lg relative group h-20 hover:bg-primary-200 transition-colors cursor-pointer"><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">Avr</div></div>
              <div class="w-full bg-primary-100 rounded-t-lg relative group h-40 hover:bg-primary-200 transition-colors cursor-pointer"><div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">Mai</div></div>
@@ -304,7 +304,55 @@
     </main>
 
     <script>
-      lucide.createIcons();
+      function loadStatsData() {
+        const savedInvoices = JSON.parse(localStorage.getItem('saved_invoices') || '[]');
+
+        const defaultInvoices = [
+          { id: 'inv_1', number: 'FAC-2024-001', client: 'Amadou Fall', date: '2024-03-20', total: 150000, status: 'Payée' },
+          { id: 'inv_2', number: 'FAC-2024-002', client: 'Kouamé Kouassi', date: '2024-03-22', total: 45000, status: 'En attente' },
+          { id: 'inv_3', number: 'FAC-2024-003', client: 'Fatou Ndiaye', date: '2024-03-25', total: 85000, status: 'En retard' }
+        ];
+
+        const invoices = savedInvoices.length > 0 ? savedInvoices : defaultInvoices;
+
+        let totalRevenue = 0;
+        let paidTotal = 0;
+        let paidCount = 0;
+        let pendingTotal = 0;
+        let pendingCount = 0;
+
+        invoices.forEach(inv => {
+          const amt = Number(inv.total) || 0;
+          totalRevenue += amt;
+          if (inv.status === 'Payée' || !inv.status) {
+            paidTotal += amt;
+            paidCount++;
+          } else {
+            pendingTotal += amt;
+            pendingCount++;
+          }
+        });
+
+        const totEl = document.getElementById('stat-total-revenue');
+        if (totEl) totEl.textContent = totalRevenue.toLocaleString('fr-FR') + ' FCFA';
+
+        const paidEl = document.getElementById('stat-paid-total');
+        if (paidEl) paidEl.textContent = paidTotal.toLocaleString('fr-FR') + ' FCFA';
+
+        const paidCntEl = document.getElementById('stat-paid-count');
+        if (paidCntEl) paidCntEl.textContent = paidCount + ' facture' + (paidCount > 1 ? 's' : '');
+
+        const pendEl = document.getElementById('stat-pending-total');
+        if (pendEl) pendEl.textContent = pendingTotal.toLocaleString('fr-FR') + ' FCFA';
+
+        const pendCntEl = document.getElementById('stat-pending-count');
+        if (pendCntEl) pendCntEl.textContent = pendingCount + ' facture' + (pendingCount > 1 ? 's' : '');
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadStatsData();
+        if (window.lucide) lucide.createIcons();
+      });
       // Basic GSAP reveal logic
       if (typeof gsap !== "undefined") {
         gsap.registerPlugin(ScrollTrigger);
