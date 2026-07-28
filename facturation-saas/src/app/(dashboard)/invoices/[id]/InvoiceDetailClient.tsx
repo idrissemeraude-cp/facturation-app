@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useTransition } from "react";
-import { ArrowLeft, Download, Printer, ChevronDown, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Printer, ChevronDown, CheckCircle2, Loader2, Share2, Mail, MessageCircle, Send, X } from "lucide-react";
 import Link from "next/link";
 import gsap from "gsap";
 import { updateInvoiceStatus } from "@/app/actions/invoices";
@@ -51,6 +51,7 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
   const [isPending, startTransition] = useTransition();
   const [currentStatus, setCurrentStatus] = useState(invoice.status);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [statusSuccess, setStatusSuccess] = useState(false);
 
   // Issuer from localStorage
@@ -86,6 +87,17 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
     });
   };
 
+  const handleWhatsApp = () => {
+    const msg = `Bonjour ${invoice.client.name},\nVeuillez trouver ci-joint la facture N° ${invoice.number} d'un montant de ${invoice.totalAmount.toLocaleString("fr-FR")} FCFA.\nMerci.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  const handleEmail = () => {
+    const subject = `Facture N° ${invoice.number}`;
+    const body = `Bonjour ${invoice.client.name},\n\nVeuillez trouver ci-joint votre facture N° ${invoice.number} d'un montant de ${invoice.totalAmount.toLocaleString("fr-FR")} FCFA.\n\nCordialement,\n${issuer.companyName}`;
+    window.open(`mailto:${invoice.client.email || ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
   const conf = statusConfig[currentStatus] || statusConfig.draft;
 
   return (
@@ -113,19 +125,22 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Imprimer / PDF */}
           <button
             onClick={() => window.print()}
-            className="p-2 text-slate-600 hover:text-slate-900 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-            title="Imprimer"
+            className="inline-flex items-center gap-2 px-4 py-2 text-slate-700 bg-white border border-slate-300 font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
           >
-            <Printer className="w-4 h-4" />
+            <Printer className="w-4 h-4 text-slate-600" />
+            Imprimer / PDF
           </button>
+
+          {/* Partager */}
           <button
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 px-4 py-2 text-slate-700 bg-white border border-slate-300 font-medium rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+            onClick={() => setIsShareModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-slate-700 bg-white border border-slate-300 font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
           >
-            <Download className="w-4 h-4" />
-            PDF
+            <Share2 className="w-4 h-4 text-blue-500" />
+            Partager
           </button>
 
           {/* Status Dropdown */}
@@ -133,7 +148,7 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
             <button
               onClick={() => setIsStatusOpen(!isStatusOpen)}
               disabled={isPending}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-600 transition-colors shadow-sm disabled:opacity-70"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-70"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Changer le statut
@@ -150,7 +165,7 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
                       className={`w-full text-left px-4 py-3 text-sm hover:bg-slate-50 flex items-center justify-between transition-colors ${s === currentStatus ? "bg-slate-50" : ""}`}
                     >
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${sc.color}`}>{sc.label}</span>
-                      {s === currentStatus && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                      {s === currentStatus && <CheckCircle2 className="w-4 h-4 text-primary-600" />}
                     </button>
                   );
                 })}
@@ -161,13 +176,13 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
       </div>
 
       {/* Invoice Document */}
-      <div className="gsap-reveal bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden print:shadow-none print:border-none">
+      <div className="gsap-reveal bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 overflow-hidden print:shadow-none print:border-none">
         <div className="p-8 md:p-12">
 
           {/* Company + Invoice header */}
           <div className="flex flex-col md:flex-row justify-between items-start gap-8 border-b border-slate-200 pb-8">
             <div>
-              <div className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center font-bold text-2xl mb-4">i</div>
+              <div className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center font-bold text-2xl mb-4">i</div>
               <h2 className="text-lg font-bold text-slate-900">{issuer.companyName}</h2>
               <div className="text-slate-500 text-sm mt-1 space-y-0.5">
                 {issuer.address && <p>{issuer.address}</p>}
@@ -177,7 +192,7 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
               </div>
             </div>
             <div className="text-left md:text-right">
-              <h2 className="text-3xl font-light text-slate-400 uppercase tracking-widest mb-4">Facture</h2>
+              <h2 className="text-3xl font-black text-slate-900 uppercase tracking-widest mb-4">Facture</h2>
               <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
                 <div className="font-medium text-slate-500">N° Facture :</div>
                 <div className="font-bold text-slate-900">{invoice.number}</div>
@@ -195,7 +210,7 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
 
           {/* Client */}
           <div className="py-8">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Facturé à</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Facturé à</h3>
             <h2 className="text-lg font-bold text-slate-900">{invoice.client.name}</h2>
             <div className="text-slate-500 text-sm mt-1 space-y-0.5">
               {invoice.client.address && <p>{invoice.client.address}</p>}
@@ -207,21 +222,21 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
           {/* Items table */}
           <div className="mt-4">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-slate-500">
+              <thead className="border-b border-slate-200 text-slate-500 text-xs font-bold uppercase tracking-wider">
                 <tr>
-                  <th className="py-3 font-medium">Description</th>
-                  <th className="py-3 font-medium text-center">Qté</th>
-                  <th className="py-3 font-medium text-right">Prix Unitaire</th>
-                  <th className="py-3 font-medium text-right">Total</th>
+                  <th className="py-3">Description</th>
+                  <th className="py-3 text-center">Qté</th>
+                  <th className="py-3 text-right">Prix Unitaire</th>
+                  <th className="py-3 text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {invoice.items.map((item) => (
                   <tr key={item.id}>
-                    <td className="py-4 text-slate-900">{item.description}</td>
-                    <td className="py-4 text-slate-900 text-center">{item.quantity}</td>
-                    <td className="py-4 text-slate-900 text-right">{item.unit_price.toLocaleString("fr-FR")} FCFA</td>
-                    <td className="py-4 text-slate-900 font-medium text-right">{item.total_price.toLocaleString("fr-FR")} FCFA</td>
+                    <td className="py-4 font-medium text-slate-900">{item.description}</td>
+                    <td className="py-4 text-slate-800 text-center font-medium">{item.quantity}</td>
+                    <td className="py-4 text-slate-800 text-right font-medium">{item.unit_price.toLocaleString("fr-FR")} FCFA</td>
+                    <td className="py-4 text-slate-900 font-bold font-mono text-right">{item.total_price.toLocaleString("fr-FR")} FCFA</td>
                   </tr>
                 ))}
               </tbody>
@@ -233,15 +248,15 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
             <div className="w-full md:w-1/2 space-y-3">
               <div className="flex items-center justify-between text-sm text-slate-600">
                 <span>Sous-total HT</span>
-                <span>{invoice.subtotal.toLocaleString("fr-FR")} FCFA</span>
+                <span className="font-mono">{invoice.subtotal.toLocaleString("fr-FR")} FCFA</span>
               </div>
               <div className="flex items-center justify-between text-sm text-slate-600">
                 <span>TVA (18%)</span>
-                <span>{invoice.taxAmount.toLocaleString("fr-FR")} FCFA</span>
+                <span className="font-mono">{invoice.taxAmount.toLocaleString("fr-FR")} FCFA</span>
               </div>
-              <div className="flex items-center justify-between text-lg font-bold text-slate-900 pt-3 border-t-2 border-slate-900">
+              <div className="flex items-center justify-between text-xl font-extrabold text-slate-900 pt-3 border-t-2 border-slate-900">
                 <span>Total TTC</span>
-                <span>{invoice.totalAmount.toLocaleString("fr-FR")} FCFA</span>
+                <span className="font-display text-primary-600">{invoice.totalAmount.toLocaleString("fr-FR")} FCFA</span>
               </div>
             </div>
           </div>
@@ -249,7 +264,7 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
           {/* Notes */}
           {invoice.notes && (
             <div className="mt-12 pt-8 border-t border-slate-200">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Notes</h3>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Notes</h3>
               <p className="text-sm text-slate-600">{invoice.notes}</p>
             </div>
           )}
@@ -261,6 +276,76 @@ export default function InvoiceDetailClient({ invoice }: { invoice: InvoiceData 
 
         </div>
       </div>
+
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 print:hidden">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95">
+            <button onClick={() => setIsShareModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold p-1">
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary-600 shadow-glow">
+              <Send className="w-7 h-7" />
+            </div>
+
+            <h3 className="text-2xl font-bold font-display text-slate-900 text-center mb-1">Partager la facture</h3>
+            <p className="text-sm text-slate-500 text-center mb-6">
+              Sélectionnez le moyen d'envoi :
+            </p>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleWhatsApp}
+                className="w-full flex items-center justify-between p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-2xl transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white shadow-sm">
+                    <MessageCircle className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-slate-900">WhatsApp</div>
+                    <div className="text-xs text-slate-500">Envoyer au client</div>
+                  </div>
+                </div>
+                <ChevronDown className="w-5 h-5 text-green-600 -rotate-90 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button
+                onClick={handleEmail}
+                className="w-full flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-sm">
+                    <Mail className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-slate-900">E-mail / Gmail</div>
+                    <div className="text-xs text-slate-500">Ouvrir votre messagerie</div>
+                  </div>
+                </div>
+                <ChevronDown className="w-5 h-5 text-blue-600 -rotate-90 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button
+                onClick={() => { setIsShareModalOpen(false); window.print(); }}
+                className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-sm">
+                    <Printer className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-slate-900">Imprimer / Télécharger PDF</div>
+                    <div className="text-xs text-slate-500">Générer le fichier document</div>
+                  </div>
+                </div>
+                <Download className="w-5 h-5 text-slate-600 group-hover:translate-y-0.5 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

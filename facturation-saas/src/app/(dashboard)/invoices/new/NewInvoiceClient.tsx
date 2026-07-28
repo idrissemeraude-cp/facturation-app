@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useTransition } from "react";
-import { Printer, Mail, Plus, Trash2, ArrowLeft, Share2, MessageCircle, Download, Save, Loader2, CheckCircle2, ChevronDown } from "lucide-react";
+import { Printer, Mail, Plus, Trash2, ArrowLeft, Share2, MessageCircle, Download, Save, Loader2, CheckCircle2, ChevronDown, UserPlus, X, Send } from "lucide-react";
 import Link from "next/link";
 import gsap from "gsap";
 import { createInvoice } from "@/app/actions/invoices";
+import { addClient } from "@/app/actions/clients";
 import { useRouter } from "next/navigation";
 
 type Client = {
@@ -27,13 +28,26 @@ interface NewInvoicePageClientProps {
   suggestedNumber: string;
 }
 
-export default function NewInvoicePageClient({ clients, suggestedNumber }: NewInvoicePageClientProps) {
+export default function NewInvoicePageClient({ clients: initialClients, suggestedNumber }: NewInvoicePageClientProps) {
   const container = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
+
+  // Modals & States
+  const [clientsList, setClientsList] = useState<Client[]>(initialClients);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
+
+  // New Client Form state
+  const [newClientName, setNewClientName] = useState("");
+  const [newClientEmail, setNewClientEmail] = useState("");
+  const [newClientPhone, setNewClientPhone] = useState("");
+  const [newClientAddress, setNewClientAddress] = useState("");
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
+  const [clientError, setClientError] = useState<string | null>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -67,7 +81,7 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
     }
   }, []);
 
-  const selectedClient = clients.find(c => c.id === selectedClientId);
+  const selectedClient = clientsList.find(c => c.id === selectedClientId);
 
   const addItem = () => {
     setItems([...items, { id: Date.now(), description: "", quantity: 1, price: 0 }]);
@@ -87,7 +101,47 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
 
   const handlePrint = () => window.print();
 
-  const handleSave = () => {
+  // Create Quick Client
+  const handleQuickAddClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClientName.trim()) {
+      setClientError("Le nom du client est obligatoire.");
+      return;
+    }
+    setClientError(null);
+    setIsCreatingClient(true);
+
+    const formData = new FormData();
+    formData.set("name", newClientName);
+    formData.set("email", newClientEmail);
+    formData.set("phone", newClientPhone);
+    formData.set("address", newClientAddress);
+
+    const res = await addClient(formData);
+    setIsCreatingClient(false);
+
+    if (res.error) {
+      setClientError(res.error);
+    } else if (res.client) {
+      const newC: Client = {
+        id: res.client.id,
+        name: res.client.name,
+        email: res.client.email,
+        phone: res.client.phone,
+        address: res.client.address,
+      };
+      setClientsList([newC, ...clientsList]);
+      setSelectedClientId(newC.id);
+      setIsNewClientModalOpen(false);
+      setNewClientName("");
+      setNewClientEmail("");
+      setNewClientPhone("");
+      setNewClientAddress("");
+    }
+  };
+
+  // Save Invoice Action
+  const handleSaveInvoice = (andShare = false) => {
     setSaveError(null);
     if (!selectedClientId) {
       setSaveError("Veuillez sélectionner un client.");
@@ -119,100 +173,90 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
         setSaveError(result.error);
       } else {
         setSaveSuccess(true);
-        setTimeout(() => {
-          router.push("/invoices");
-        }, 1200);
+        if (result.invoice) {
+          setCreatedInvoiceId(result.invoice.id);
+        }
+        if (andShare) {
+          setIsShareModalOpen(true);
+        } else {
+          setTimeout(() => {
+            router.push("/invoices");
+          }, 1200);
+        }
       }
     });
   };
 
   const handleWhatsApp = () => {
-    const client = selectedClient?.name || "le client";
-    const message = `Bonjour ${client}, veuillez trouver ci-joint votre facture ${invoiceNumber} d'un montant de ${total.toLocaleString()} FCFA. Merci.`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-    setIsShareOpen(false);
+    const clientName = selectedClient?.name || "Cher client";
+    const msg = `Bonjour ${clientName},\nVoici votre facture ${invoiceNumber} d'un montant de ${total.toLocaleString("fr-FR")} FCFA.\nMerci pour votre confiance.`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   const handleEmail = () => {
-    const client = selectedClient?.name || "le client";
-    const subject = `Facture ${invoiceNumber}`;
-    const body = `Bonjour ${client},%0A%0AJe vous transmets la facture ${invoiceNumber} d'un montant de ${total.toLocaleString()} FCFA.%0A%0ACordialement`;
-    window.open(`mailto:${selectedClient?.email || ""}?subject=${subject}&body=${body}`);
-    setIsShareOpen(false);
+    const clientName = selectedClient?.name || "Cher client";
+    const subject = `Facture ${invoiceNumber} - ${issuer.companyName || "iziFacture"}`;
+    const body = `Bonjour ${clientName},\n\nVeuillez trouver ci-joint votre facture N° ${invoiceNumber} d'un montant de ${total.toLocaleString("fr-FR")} FCFA.\n\nCordialement,\n${issuer.companyName}`;
+    window.open(`mailto:${selectedClient?.email || ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12" ref={container}>
       {/* Top Action Bar */}
       <div className="gsap-reveal flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
-        <Link href="/invoices" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
+        <Link href="/invoices" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-medium">
           <ArrowLeft className="w-5 h-5" />
           <span>Retour aux factures</span>
         </Link>
-        <div className="flex items-center gap-3 relative">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Imprimer / PDF */}
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
           >
-            <Printer className="w-4 h-4" />
-            Imprimer
+            <Printer className="w-4 h-4 text-slate-600" />
+            Imprimer / PDF
           </button>
 
-          {/* Share dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setIsShareOpen(!isShareOpen)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
-            >
-              <Share2 className="w-4 h-4" />
-              Partager
-              <ChevronDown className="w-3 h-3" />
-            </button>
-            {isShareOpen && (
-              <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                <button onClick={handleEmail} className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors">
-                  <Mail className="w-4 h-4 text-slate-400" /> Envoyer par E-mail
-                </button>
-                <button onClick={handleWhatsApp} className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors border-t border-slate-100">
-                  <MessageCircle className="w-4 h-4 text-green-500" /> Partager via WhatsApp
-                </button>
-                <button onClick={() => { setIsShareOpen(false); handlePrint(); }} className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors border-t border-slate-100">
-                  <Download className="w-4 h-4 text-blue-500" /> Enregistrer en PDF
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Save button */}
+          {/* Partager */}
           <button
-            onClick={handleSave}
-            disabled={isPending || saveSuccess}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-all shadow-sm shadow-primary-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
+            onClick={() => setIsShareModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
           >
-            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : saveSuccess ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-            {isPending ? "Sauvegarde..." : saveSuccess ? "Sauvegardée !" : "Sauvegarder"}
+            <Share2 className="w-4 h-4 text-blue-500" />
+            Partager
+          </button>
+
+          {/* Créer et Envoyer */}
+          <button
+            onClick={() => handleSaveInvoice(true)}
+            disabled={isPending || saveSuccess}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl transition-all shadow-md shadow-primary-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            Créer & Envoyer
           </button>
         </div>
       </div>
 
       {/* Error message */}
       {saveError && (
-        <div className="gsap-reveal bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 print:hidden">
+        <div className="gsap-reveal bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 print:hidden font-medium">
           <span>⚠️</span> {saveError}
         </div>
       )}
 
       {/* The Invoice Sheet */}
-      <div className="gsap-reveal bg-white shadow-xl shadow-slate-200/50 rounded-xl overflow-hidden print:shadow-none print:rounded-none">
-        <div className="p-10 md:p-16">
+      <div className="gsap-reveal bg-white shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden print:shadow-none print:rounded-none">
+        <div className="p-8 md:p-14">
 
           {/* Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <h1 className="text-4xl font-black text-slate-900 tracking-widest uppercase">Facture</h1>
           </div>
 
           {/* Numéro + Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 p-4 bg-slate-50 rounded-xl print:bg-transparent print:p-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 p-4 bg-slate-50 rounded-xl print:bg-transparent print:p-0 border border-slate-100">
             <div className="space-y-1">
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">N° Facture</label>
               <input
@@ -243,54 +287,63 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
           </div>
 
           {/* Émetteur & Client */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-10">
             {/* Émetteur */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Émetteur</h2>
+            <div className="space-y-2">
+              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Émetteur</h2>
               <input
                 type="text"
                 placeholder="Nom de l'entreprise"
                 value={issuer.companyName}
                 onChange={(e) => setIssuer(prev => ({ ...prev, companyName: e.target.value }))}
-                className="block w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent transition-colors py-1 text-slate-900 font-medium"
+                className="block w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent transition-colors py-1 text-slate-900 font-bold text-lg"
               />
               <input
                 type="email"
                 placeholder="Adresse e-mail"
                 value={issuer.email}
                 onChange={(e) => setIssuer(prev => ({ ...prev, email: e.target.value }))}
-                className="block w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent transition-colors py-1 text-slate-600"
+                className="block w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent transition-colors py-1 text-slate-600 text-sm"
               />
               <input
                 type="tel"
                 placeholder="Téléphone"
                 value={issuer.phone}
                 onChange={(e) => setIssuer(prev => ({ ...prev, phone: e.target.value }))}
-                className="block w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent transition-colors py-1 text-slate-600"
+                className="block w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent transition-colors py-1 text-slate-600 text-sm"
               />
               <input
                 type="text"
                 placeholder="Adresse"
                 value={issuer.address}
                 onChange={(e) => setIssuer(prev => ({ ...prev, address: e.target.value }))}
-                className="block w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent transition-colors py-1 text-slate-600"
+                className="block w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent transition-colors py-1 text-slate-600 text-sm"
               />
             </div>
 
-            {/* Facturé à — Sélecteur client */}
+            {/* Facturé à — Sélecteur + Bouton Nouveau Client */}
             <div className="space-y-3">
-              <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Facturé à</h2>
-              
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Facturé à</h2>
+                <button
+                  type="button"
+                  onClick={() => setIsNewClientModalOpen(true)}
+                  className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1 print:hidden"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  + Nouveau client
+                </button>
+              </div>
+
               {/* Select Client */}
               <div className="print:hidden">
-                <label className="block text-xs font-medium text-slate-500 mb-1">Sélectionner un client</label>
                 <select
                   value={selectedClientId}
                   onChange={(e) => setSelectedClientId(e.target.value)}
-                  className="block w-full border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                  className="block w-full border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white shadow-sm"
                 >
-                  <option value="">-- Choisir un client --</option>
-                  {clients.map(client => (
+                  <option value="">-- Choisir ou ajouter un client --</option>
+                  {clientsList.map(client => (
                     <option key={client.id} value={client.id}>{client.name}</option>
                   ))}
                 </select>
@@ -298,14 +351,16 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
 
               {/* Display selected client info */}
               {selectedClient ? (
-                <div className="space-y-1 text-slate-700 mt-2">
-                  <div className="font-bold text-slate-900">{selectedClient.name}</div>
+                <div className="space-y-1 text-slate-700 mt-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <div className="font-bold text-slate-900 text-base">{selectedClient.name}</div>
                   {selectedClient.email && <div className="text-slate-600 text-sm">{selectedClient.email}</div>}
                   {selectedClient.phone && <div className="text-slate-600 text-sm">{selectedClient.phone}</div>}
                   {selectedClient.address && <div className="text-slate-600 text-sm">{selectedClient.address}</div>}
                 </div>
               ) : (
-                <p className="text-slate-400 text-sm italic print:hidden">Les informations du client apparaîtront ici.</p>
+                <div className="p-3 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-sm italic print:hidden text-center">
+                  Aucun client sélectionné. Choisissez ou créez un client ci-dessus.
+                </div>
               )}
             </div>
           </div>
@@ -316,7 +371,7 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
           <div className="mb-8">
             <h2 className="text-lg font-bold text-slate-900 mb-6">Détail des prestations</h2>
 
-            <div className="grid grid-cols-12 gap-4 border-b border-slate-200 pb-2 text-sm font-bold text-slate-500 uppercase tracking-wider">
+            <div className="grid grid-cols-12 gap-4 border-b border-slate-200 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
               <div className="col-span-6">Description</div>
               <div className="col-span-2 text-center">Qté</div>
               <div className="col-span-2 text-right">PU (FCFA)</div>
@@ -330,13 +385,13 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
                     <input
                       type="text"
                       placeholder="Nom de la prestation"
-                      className="w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent py-2 text-slate-800"
+                      className="w-full border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent py-2 text-slate-800 font-medium"
                       value={item.description}
                       onChange={(e) => updateItem(item.id, "description", e.target.value)}
                     />
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="absolute -left-8 top-1/2 -translate-y-1/2 p-1 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+                      className="absolute -left-8 top-1/2 -translate-y-1/2 p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -345,7 +400,7 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
                     <input
                       type="number"
                       min="1"
-                      className="w-full text-center border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent py-2 text-slate-800"
+                      className="w-full text-center border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent py-2 text-slate-800 font-medium"
                       value={item.quantity || ""}
                       onChange={(e) => updateItem(item.id, "quantity", parseInt(e.target.value) || 1)}
                     />
@@ -354,12 +409,12 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
                     <input
                       type="number"
                       min="0"
-                      className="w-full text-right border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent py-2 text-slate-800"
+                      className="w-full text-right border-b border-transparent hover:border-slate-200 focus:border-slate-400 focus:outline-none bg-transparent py-2 text-slate-800 font-medium"
                       value={item.price || ""}
                       onChange={(e) => updateItem(item.id, "price", parseFloat(e.target.value) || 0)}
                     />
                   </div>
-                  <div className="col-span-2 text-right font-medium text-slate-900 py-2">
+                  <div className="col-span-2 text-right font-mono font-bold text-slate-900 py-2">
                     {(item.quantity * item.price).toLocaleString("fr-FR")}
                   </div>
                 </div>
@@ -368,7 +423,7 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
 
             <button
               onClick={addItem}
-              className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-600 transition-colors print:hidden"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary-600 hover:text-primary-700 transition-colors print:hidden"
             >
               <Plus className="w-4 h-4" />
               Ajouter une ligne
@@ -378,17 +433,17 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
           {/* Totaux */}
           <div className="flex justify-end pt-8">
             <div className="w-full md:w-1/2 space-y-3">
-              <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center justify-between text-slate-600 text-sm">
                 <span className="font-medium">Sous-total HT</span>
-                <span>{subtotal.toLocaleString("fr-FR")} FCFA</span>
+                <span className="font-mono">{subtotal.toLocaleString("fr-FR")} FCFA</span>
               </div>
-              <div className="flex items-center justify-between text-slate-600">
+              <div className="flex items-center justify-between text-slate-600 text-sm">
                 <span className="font-medium">TVA (18%)</span>
-                <span>{tax.toLocaleString("fr-FR")} FCFA</span>
+                <span className="font-mono">{tax.toLocaleString("fr-FR")} FCFA</span>
               </div>
-              <div className="pt-4 border-t-2 border-slate-900 flex items-center justify-between text-xl font-bold text-slate-900">
+              <div className="pt-4 border-t-2 border-slate-900 flex items-center justify-between text-xl font-extrabold text-slate-900">
                 <span>Grand Total TTC</span>
-                <span>{total.toLocaleString("fr-FR")} FCFA</span>
+                <span className="text-primary-600 font-display">{total.toLocaleString("fr-FR")} FCFA</span>
               </div>
             </div>
           </div>
@@ -401,18 +456,163 @@ export default function NewInvoicePageClient({ clients, suggestedNumber }: NewIn
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Ex: Paiement par virement bancaire sous 30 jours. Merci de votre confiance."
-              className="w-full border border-slate-200 rounded-lg px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
             />
           </div>
-          {notes && (
-            <div className="mt-10 pt-8 border-t border-slate-200 hidden print:block">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Notes</h3>
-              <p className="text-sm text-slate-600">{notes}</p>
-            </div>
-          )}
-
         </div>
       </div>
+
+      {/* MODAL 1: Partager & Envoyer (WhatsApp, Gmail, PDF) */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 print:hidden">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95">
+            <button onClick={() => setIsShareModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold p-1">
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary-600 shadow-glow">
+              <Send className="w-7 h-7" />
+            </div>
+
+            <h3 className="text-2xl font-bold font-display text-slate-900 text-center mb-1">Envoyer la facture</h3>
+            <p className="text-sm text-slate-500 text-center mb-6">
+              Choisissez votre canal d'envoi préféré :
+            </p>
+
+            <div className="space-y-3">
+              {/* WhatsApp Button */}
+              <button
+                onClick={handleWhatsApp}
+                className="w-full flex items-center justify-between p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-2xl transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white shadow-sm">
+                    <MessageCircle className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-slate-900">WhatsApp</div>
+                    <div className="text-xs text-slate-500">Envoyer directement au client</div>
+                  </div>
+                </div>
+                <ChevronDown className="w-5 h-5 text-green-600 -rotate-90 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              {/* Gmail / Email Button */}
+              <button
+                onClick={handleEmail}
+                className="w-full flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-sm">
+                    <Mail className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-slate-900">E-mail / Gmail</div>
+                    <div className="text-xs text-slate-500">Ouvrir votre messagerie</div>
+                  </div>
+                </div>
+                <ChevronDown className="w-5 h-5 text-blue-600 -rotate-90 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              {/* Print / PDF Button */}
+              <button
+                onClick={() => { setIsShareModalOpen(false); handlePrint(); }}
+                className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-sm">
+                    <Printer className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-slate-900">Imprimer / Télécharger PDF</div>
+                    <div className="text-xs text-slate-500">Générer le fichier document</div>
+                  </div>
+                </div>
+                <Download className="w-5 h-5 text-slate-600 group-hover:translate-y-0.5 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Ajouter un Nouveau Client */}
+      {isNewClientModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4 print:hidden">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95">
+            <button onClick={() => setIsNewClientModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold p-1">
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary-600 shadow-glow">
+              <UserPlus className="w-7 h-7" />
+            </div>
+
+            <h3 className="text-2xl font-bold font-display text-slate-900 text-center mb-1">Nouveau Client</h3>
+            <p className="text-sm text-slate-500 text-center mb-6">Ajoutez rapidement les coordonnées du client</p>
+
+            {clientError && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs mb-4 text-center font-medium">
+                {clientError}
+              </div>
+            )}
+
+            <form onSubmit={handleQuickAddClient} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nom complet / Entreprise *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Société ABC"
+                  value={newClientName}
+                  onChange={(e) => setNewClientName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email</label>
+                <input
+                  type="email"
+                  placeholder="client@exemple.com"
+                  value={newClientEmail}
+                  onChange={(e) => setNewClientEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Téléphone</label>
+                <input
+                  type="tel"
+                  placeholder="+226 XX XX XX XX"
+                  value={newClientPhone}
+                  onChange={(e) => setNewClientPhone(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Adresse</label>
+                <input
+                  type="text"
+                  placeholder="Ouagadougou, Burkina Faso"
+                  value={newClientAddress}
+                  onChange={(e) => setNewClientAddress(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none text-slate-800"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isCreatingClient}
+                className="w-full py-3.5 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mt-6"
+              >
+                {isCreatingClient ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enregistrer & Sélectionner"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

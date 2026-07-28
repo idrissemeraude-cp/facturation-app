@@ -371,14 +371,14 @@
 
                   <!-- Actions -->
                   <div class="space-y-3">
-                    <button onclick="window.location.href = 'factures.html'" id="send-invoice-btn" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-white bg-primary-500 hover:bg-primary-600 shadow-glow transition-all">
+                    <button onclick="openShareModal()" id="send-invoice-btn" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-white bg-primary-500 hover:bg-primary-600 shadow-glow transition-all">
                       <i data-lucide="send" class="w-4 h-4 mr-2"></i> Créer & Envoyer
                     </button>
-                    <button onclick="alert('Brouillon enregistré avec succès !')" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
-                      <i data-lucide="save" class="w-4 h-4 mr-2"></i> Enregistrer
+                    <button onclick="window.print()" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-all">
+                      <i data-lucide="printer" class="w-4 h-4 mr-2 text-slate-600"></i> Imprimer / Télécharger PDF
                     </button>
-                    <button onclick="alert('Lien de partage copié dans le presse-papiers !')" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-all">
-                      <i data-lucide="share-2" class="w-4 h-4 mr-2"></i> Partager
+                    <button onclick="openShareModal()" class="w-full flex items-center justify-center py-3.5 px-6 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all">
+                      <i data-lucide="share-2" class="w-4 h-4 mr-2 text-blue-500"></i> Partager via WhatsApp / Email
                     </button>
                   </div>
                 </div>
@@ -542,6 +542,91 @@
             },
           });
         });
+      }
+
+    <!-- Share Modal -->
+    <div id="share-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all">
+      <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl border border-slate-200 relative text-center">
+        <button onclick="closeShareModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 font-bold text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100">&times;</button>
+        
+        <div class="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary-600 shadow-glow">
+          <i data-lucide="send" class="w-7 h-7"></i>
+        </div>
+
+        <h3 class="text-2xl font-bold font-display text-slate-900 mb-1">Envoyer la facture</h3>
+        <p class="text-sm text-slate-500 mb-6">Choisissez votre canal d'envoi préféré :</p>
+
+        <div class="space-y-3 text-left">
+          <button onclick="shareWhatsApp()" class="w-full flex items-center justify-between p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-2xl transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white font-bold">
+                <i data-lucide="message-circle" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="font-bold text-slate-900">WhatsApp</div>
+                <div class="text-xs text-slate-500">Envoyer directement au client</div>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-green-600"></i>
+          </button>
+
+          <button onclick="shareGmail()" class="w-full flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold">
+                <i data-lucide="mail" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="font-bold text-slate-900">E-mail / Gmail</div>
+                <div class="text-xs text-slate-500">Ouvrir votre messagerie</div>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-blue-600"></i>
+          </button>
+
+          <button onclick="closeShareModal(); window.print();" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold">
+                <i data-lucide="printer" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="font-bold text-slate-900">Imprimer / PDF</div>
+                <div class="text-xs text-slate-500">Télécharger le document PDF</div>
+              </div>
+            </div>
+            <i data-lucide="download" class="w-5 h-5 text-slate-600"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function openShareModal() {
+        const modal = document.getElementById('share-modal');
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        }
+      }
+
+      function closeShareModal() {
+        const modal = document.getElementById('share-modal');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+      }
+
+      function shareWhatsApp() {
+        const msg = "Bonjour, veuillez trouver ci-joint votre facture iziFacture. Merci pour votre confiance !";
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        closeShareModal();
+      }
+
+      function shareGmail() {
+        const subject = "Votre Facture iziFacture";
+        const body = "Bonjour,\n\nVeuillez trouver ci-joint votre facture.\n\nCordialement,";
+        window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+        closeShareModal();
       }
 
       function toggleSidebar() {
