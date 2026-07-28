@@ -74,11 +74,24 @@ export default function NewInvoicePageClient({ clients: initialClients, suggeste
   // Infos émetteur depuis localStorage
   const [issuer, setIssuer] = useState({ companyName: "", email: "", phone: "", address: "" });
   useEffect(() => {
-    const saved = localStorage.getItem("invoiceIssuerSettings");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setIssuer({ companyName: parsed.companyName || "", email: parsed.email || "", phone: parsed.phone || "", address: parsed.address || "" });
+    let nom = localStorage.getItem("param_nom") || "";
+    let email = localStorage.getItem("param_email") || "";
+    let phone = localStorage.getItem("param_telephone") || "";
+    let address = localStorage.getItem("param_localisation") || "";
+
+    if (!nom || !email) {
+      const saved = localStorage.getItem("invoiceIssuerSettings");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (!nom && parsed.companyName) nom = parsed.companyName;
+          if (!email && parsed.email) email = parsed.email;
+          if (!phone && parsed.phone) phone = parsed.phone;
+          if (!address && parsed.address) address = parsed.address;
+        } catch (e) {}
+      }
     }
+    setIssuer({ companyName: nom, email, phone, address });
   }, []);
 
   const selectedClient = clientsList.find(c => c.id === selectedClientId);

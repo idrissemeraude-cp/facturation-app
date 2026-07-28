@@ -460,11 +460,11 @@
       }
 
       function loadInvoiceEmitter() {
-        let nom = localStorage.getItem('param_nom');
-        let email = localStorage.getItem('param_email');
-        let loc = localStorage.getItem('param_localisation');
-        let tel = localStorage.getItem('param_telephone');
-        let logo = localStorage.getItem('param_logo');
+        let nom = localStorage.getItem('param_nom') || '';
+        let email = localStorage.getItem('param_email') || '';
+        let loc = localStorage.getItem('param_localisation') || '';
+        let tel = localStorage.getItem('param_telephone') || '';
+        let logo = localStorage.getItem('param_logo') || '';
 
         if (!nom || !email) {
           const savedJson = localStorage.getItem('invoiceIssuerSettings');
@@ -489,16 +489,18 @@
         const senderTelEl = document.getElementById('sender-telephone');
         const senderAvatarEl = document.getElementById('invoice-sender-avatar');
 
-        if (senderNomEl) senderNomEl.value = (nom && nom.trim()) ? nom : '';
-        if (senderEmailEl) senderEmailEl.value = (email && email.trim()) ? email : '';
-        if (senderLocEl) senderLocEl.value = (loc && loc.trim()) ? loc : '';
-        if (senderTelEl) senderTelEl.value = (tel && tel.trim()) ? tel : '';
+        if (senderNomEl) senderNomEl.value = nom;
+        if (senderEmailEl) senderEmailEl.value = email;
+        if (senderLocEl) senderLocEl.value = loc;
+        if (senderTelEl) senderTelEl.value = tel;
 
         if (senderAvatarEl) {
           if (logo) {
             senderAvatarEl.innerHTML = '<img src="' + logo + '" alt="Logo" class="w-full h-full object-cover rounded-2xl" />';
+          } else if (nom) {
+            senderAvatarEl.textContent = getInitials(nom);
           } else {
-            senderAvatarEl.textContent = getInitials(nom || 'Mon Entreprise');
+            senderAvatarEl.textContent = 'ME';
           }
         }
       }
