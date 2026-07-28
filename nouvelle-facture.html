@@ -600,7 +600,37 @@
     </div>
 
     <script>
+      function saveCurrentInvoiceToStorage() {
+        const clientName = document.querySelector('input[placeholder="Nom du client / Entreprise"]')?.value || "Client Divers";
+        const clientEmail = document.querySelector('input[placeholder="Email du client"]')?.value || "";
+        const invNumberInput = document.querySelector('input[value*="INV-"]') || document.querySelector('input[value*="FAC-"]');
+        const invNumber = invNumberInput ? invNumberInput.value : ("FAC-2024-00" + Math.floor(Math.random() * 90 + 10));
+        const issueDate = document.getElementById("current-date")?.value || new Date().toISOString().split("T")[0];
+        const totalText = document.getElementById("summary-total")?.innerText || "0";
+        const totalAmount = parseFloat(totalText.replace(/\s/g, '').replace(',', '.')) || 0;
+
+        const newInvoice = {
+          id: "inv_" + Date.now(),
+          number: invNumber,
+          client: clientName,
+          clientEmail: clientEmail,
+          date: issueDate,
+          total: totalAmount,
+          status: "Payée"
+        };
+
+        const existing = JSON.parse(localStorage.getItem('saved_invoices') || '[]');
+        const existingIdx = existing.findIndex(i => i.number === invNumber);
+        if (existingIdx >= 0) {
+          existing[existingIdx] = newInvoice;
+        } else {
+          existing.unshift(newInvoice);
+        }
+        localStorage.setItem('saved_invoices', JSON.stringify(existing));
+      }
+
       function openShareModal() {
+        saveCurrentInvoiceToStorage();
         const modal = document.getElementById('share-modal');
         if (modal) {
           modal.classList.remove('hidden');

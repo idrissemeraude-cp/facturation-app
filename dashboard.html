@@ -262,8 +262,8 @@
             >
               <i data-lucide="wallet" class="w-6 h-6"></i>
             </div>
-            <div class="text-sm text-slate-500 mb-1">Revenus (30 jours)</div>
-            <div class="text-2xl font-display font-bold text-slate-900">
+            <div class="text-sm text-slate-500 mb-1">Revenus (Total)</div>
+            <div id="dash-stat-revenue" class="text-2xl font-display font-bold text-slate-900">
               0 FCFA
             </div>
             <div
@@ -281,13 +281,14 @@
               <i data-lucide="clock" class="w-6 h-6"></i>
             </div>
             <div class="text-sm text-slate-500 mb-1">En attente</div>
-            <div class="text-2xl font-display font-bold text-slate-900">
+            <div id="dash-stat-pending" class="text-2xl font-display font-bold text-slate-900">
               0 FCFA
             </div>
             <div
+              id="dash-stat-pending-count"
               class="absolute top-6 right-6 text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full"
             >
-              4 factures
+              0 factures
             </div>
           </div>
           <div
@@ -299,11 +300,11 @@
               <i data-lucide="users" class="w-6 h-6"></i>
             </div>
             <div class="text-sm text-slate-500 mb-1">Nouveaux Clients</div>
-            <div class="text-2xl font-display font-bold text-slate-900">0</div>
+            <div id="dash-stat-clients" class="text-2xl font-display font-bold text-slate-900">0</div>
             <div
               class="absolute top-6 right-6 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full"
             >
-              +3 ce mois
+              Actifs
             </div>
           </div>
         </div>
@@ -317,6 +318,7 @@
           >
             <h2 class="font-bold text-slate-900">Factures Récentes</h2>
             <button
+              onclick="window.location.href='factures.html'"
               class="text-sm font-medium text-primary-600 hover:text-primary-700"
             >
               Voir tout
@@ -331,11 +333,10 @@
                   <th class="px-6 py-4">Date</th>
                   <th class="px-6 py-4">Montant</th>
                   <th class="px-6 py-4">Statut</th>
-                  <th class="px-6 py-4"></th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr><td colspan="6" class="text-center py-8 text-slate-500">Aucune donnée pour le moment.</td></tr>
+              <tbody id="dash-invoices-tbody" class="divide-y divide-slate-100">
+                <!-- Injected via JS -->
               </tbody>
             </table>
           </div>
@@ -360,6 +361,84 @@
         });
       }
     
+      function loadDashboardData() {
+        const savedInvoices = JSON.parse(localStorage.getItem('saved_invoices') || '[]');
+        const savedClients = JSON.parse(localStorage.getItem('saved_clients') || '[]');
+
+        const defaultInvoices = [
+          { id: 'inv_1', number: 'FAC-2024-001', client: 'Amadou Fall (TechAfrica Studio)', date: '2024-03-20', total: 150000, status: 'Payée' },
+          { id: 'inv_2', number: 'FAC-2024-002', client: 'Kouamé Kouassi (Ivoire Commerce)', date: '2024-03-22', total: 45000, status: 'En attente' },
+          { id: 'inv_3', number: 'FAC-2024-003', client: 'Fatou Ndiaye (Dakar Digital)', date: '2024-03-25', total: 85000, status: 'En retard' }
+        ];
+
+        const defaultClients = [
+          { id: 'cli_1', name: 'TechAfrica Studio' },
+          { id: 'cli_2', name: 'Ivoire Commerce' },
+          { id: 'cli_3', name: 'Dakar Digital' }
+        ];
+
+        const invoices = savedInvoices.length > 0 ? savedInvoices : defaultInvoices;
+        const clients = savedClients.length > 0 ? savedClients : defaultClients;
+
+        // Calculations
+        let totalRevenue = 0;
+        let pendingRevenue = 0;
+        let pendingCount = 0;
+
+        invoices.forEach(inv => {
+          const amount = Number(inv.total) || 0;
+          if (inv.status === 'Payée' || !inv.status) {
+            totalRevenue += amount;
+          } else {
+            pendingRevenue += amount;
+            pendingCount++;
+          }
+        });
+
+        // Set Stats
+        const revEl = document.getElementById('dash-stat-revenue');
+        if (revEl) revEl.textContent = totalRevenue.toLocaleString('fr-FR') + ' FCFA';
+
+        const pendEl = document.getElementById('dash-stat-pending');
+        if (pendEl) pendEl.textContent = pendingRevenue.toLocaleString('fr-FR') + ' FCFA';
+
+        const pendCountEl = document.getElementById('dash-stat-pending-count');
+        if (pendCountEl) pendCountEl.textContent = pendingCount + ' facture' + (pendingCount > 1 ? 's' : '');
+
+        const cliEl = document.getElementById('dash-stat-clients');
+        if (cliEl) cliEl.textContent = clients.length;
+
+        // Render Recent Invoices
+        const tbody = document.getElementById('dash-invoices-tbody');
+        if (tbody) {
+          tbody.innerHTML = '';
+          invoices.slice(0, 5).forEach(inv => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50/50 transition-colors';
+
+            let statusClass = 'bg-green-100 text-green-700';
+            if (inv.status === 'En attente') statusClass = 'bg-yellow-100 text-yellow-700';
+            if (inv.status === 'En retard') statusClass = 'bg-red-100 text-red-700';
+
+            tr.innerHTML = `
+              <td class="px-6 py-4 font-bold font-mono text-slate-900">${inv.number}</td>
+              <td class="px-6 py-4 text-slate-800 font-medium">${inv.client}</td>
+              <td class="px-6 py-4 text-slate-500 text-sm">${inv.date}</td>
+              <td class="px-6 py-4 font-bold text-slate-900">${Number(inv.total).toLocaleString('fr-FR')} FCFA</td>
+              <td class="px-6 py-4">
+                <span class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${statusClass}">${inv.status || 'Payée'}</span>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadDashboardData();
+        if (window.lucide) lucide.createIcons();
+      });
+
       function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
         const overlay = document.getElementById("sidebar-overlay");

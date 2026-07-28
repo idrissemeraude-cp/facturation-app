@@ -262,23 +262,22 @@
             <h2 class="font-bold text-slate-900">Tous les clients</h2>
             <div class="flex items-center bg-white border border-slate-200 rounded-xl px-3 py-1.5">
               <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-              <input type="text" placeholder="Rechercher..." class="bg-transparent border-none outline-none ml-2 text-sm w-48 placeholder-slate-400 text-slate-900" />
+              <input id="search-client-input" onkeyup="filterClientsTable()" type="text" placeholder="Rechercher..." class="bg-transparent border-none outline-none ml-2 text-sm w-48 placeholder-slate-400 text-slate-900" />
             </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead class="bg-slate-50 text-slate-500 font-medium">
                 <tr>
-                  <th class="px-6 py-4">Nom de l'entreprise</th>
-                  <th class="px-6 py-4">Contact</th>
+                  <th class="px-6 py-4">Nom / Entreprise</th>
+                  <th class="px-6 py-4">Email</th>
                   <th class="px-6 py-4">Téléphone</th>
-                  <th class="px-6 py-4">Facturé (Total)</th>
-                  <th class="px-6 py-4">Statut</th>
-                  <th class="px-6 py-4"></th>
+                  <th class="px-6 py-4">Adresse</th>
+                  <th class="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr><td colspan="5" class="text-center py-8 text-slate-500">Aucun client pour le moment. Ajoutez votre premier client.</td></tr>
+              <tbody id="clients-tbody" class="divide-y divide-slate-100">
+                <!-- Injected via JS -->
               </tbody>
             </table>
           </div>
@@ -287,7 +286,67 @@
     </main>
 
     <script>
-      lucide.createIcons();
+      function loadClientsList() {
+        const tbody = document.getElementById('clients-tbody');
+        if (!tbody) return;
+
+        const saved = JSON.parse(localStorage.getItem('saved_clients') || '[]');
+
+        const defaultClients = [
+          { id: 'cli_1', name: 'TechAfrica Studio (Amadou Fall)', email: 'amadou@techafrica.com', phone: '+226 70 12 34 56', address: 'Ouagadougou' },
+          { id: 'cli_2', name: 'Ivoire Commerce (Kouamé)', email: 'contact@ivoirecom.ci', phone: '+225 07 89 01 23', address: 'Abidjan' },
+          { id: 'cli_3', name: 'Dakar Digital (Fatou Ndiaye)', email: 'fatou@dakardigital.sn', phone: '+221 77 456 78 90', address: 'Dakar' }
+        ];
+
+        const allClients = saved.length > 0 ? saved : defaultClients;
+
+        tbody.innerHTML = '';
+        if (allClients.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">Aucun client pour le moment. Cliquez sur Nouveau Client pour en ajouter.</td></tr>';
+          return;
+        }
+
+        allClients.forEach(cli => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50/50 transition-colors client-row';
+          tr.innerHTML = `
+            <td class="px-6 py-4 font-bold text-slate-900">${cli.name}</td>
+            <td class="px-6 py-4 text-slate-600">${cli.email || '-'}</td>
+            <td class="px-6 py-4 text-slate-600 font-mono text-xs">${cli.phone || '-'}</td>
+            <td class="px-6 py-4 text-slate-500 text-xs">${cli.address || '-'}</td>
+            <td class="px-6 py-4 text-right">
+              <button onclick="deleteClientItem('${cli.id}')" class="text-slate-400 hover:text-red-500 transition-colors p-1" title="Supprimer">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function deleteClientItem(id) {
+        if (!confirm("Voulez-vous supprimer ce client ?")) return;
+        let saved = JSON.parse(localStorage.getItem('saved_clients') || '[]');
+        saved = saved.filter(c => c.id !== id);
+        localStorage.setItem('saved_clients', JSON.stringify(saved));
+        loadClientsList();
+      }
+
+      function filterClientsTable() {
+        const query = (document.getElementById('search-client-input')?.value || '').toLowerCase();
+        const rows = document.querySelectorAll('.client-row');
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(query) ? '' : 'none';
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadClientsList();
+        if (window.lucide) lucide.createIcons();
+      });
       // Basic GSAP reveal logic
       if (typeof gsap !== "undefined") {
         gsap.registerPlugin(ScrollTrigger);
