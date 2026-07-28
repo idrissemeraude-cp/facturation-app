@@ -219,24 +219,48 @@
             <div
               class="bg-white rounded-3xl p-8 shadow-xl border border-slate-100"
             >
-              <!-- Header Emitter Info (Auto-updated from Settings) -->
+              <!-- Header Emitter Info (Auto-updated from Settings & Editable) -->
               <div
                 class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-10"
               >
                 <div class="flex items-center gap-4">
                   <div
-                    class="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-display font-bold text-2xl shadow-lg overflow-hidden shrink-0"
+                    class="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-display font-bold text-2xl shadow-lg overflow-hidden shrink-0 cursor-pointer"
                     id="invoice-sender-avatar"
+                    onclick="window.location.href='parametres.html'"
+                    title="Changer le logo dans les paramètres"
                   >
                     ME
                   </div>
-                  <div>
-                    <h2 id="sender-nom" class="font-bold text-xl leading-tight text-slate-900">
-                      Nom de votre entreprise
-                    </h2>
-                    <p id="sender-email" class="text-sm text-slate-500">contact@votre-entreprise.com</p>
-                    <p id="sender-localisation" class="text-sm text-slate-500">Votre adresse / ville</p>
-                    <p id="sender-telephone" class="text-sm text-slate-500">+226 XX XX XX XX</p>
+                  <div class="space-y-1">
+                    <input
+                      id="sender-nom"
+                      type="text"
+                      oninput="saveIssuerField('param_nom', this.value)"
+                      class="font-bold text-xl leading-tight text-slate-900 outline-none border-b border-transparent focus:border-primary-500 bg-transparent w-full placeholder-slate-400"
+                      placeholder="Nom de votre entreprise"
+                    />
+                    <input
+                      id="sender-email"
+                      type="email"
+                      oninput="saveIssuerField('param_email', this.value)"
+                      class="text-sm text-slate-500 outline-none border-b border-transparent focus:border-primary-500 bg-transparent w-full block placeholder-slate-400"
+                      placeholder="contact@votre-entreprise.com"
+                    />
+                    <input
+                      id="sender-localisation"
+                      type="text"
+                      oninput="saveIssuerField('param_localisation', this.value)"
+                      class="text-sm text-slate-500 outline-none border-b border-transparent focus:border-primary-500 bg-transparent w-full block placeholder-slate-400"
+                      placeholder="Votre adresse / ville"
+                    />
+                    <input
+                      id="sender-telephone"
+                      type="tel"
+                      oninput="saveIssuerField('param_telephone', this.value)"
+                      class="text-sm text-slate-500 outline-none border-b border-transparent focus:border-primary-500 bg-transparent w-full block placeholder-slate-400"
+                      placeholder="+226 XX XX XX XX"
+                    />
                   </div>
                 </div>
                 <div class="text-left sm:text-right w-full sm:w-auto">
@@ -420,6 +444,21 @@
         return (first + last).toUpperCase();
       }
 
+      function saveIssuerField(key, value) {
+        localStorage.setItem(key, value);
+        const nom = document.getElementById('sender-nom')?.value || '';
+        const email = document.getElementById('sender-email')?.value || '';
+        const loc = document.getElementById('sender-localisation')?.value || '';
+        const tel = document.getElementById('sender-telephone')?.value || '';
+        const issuerData = { companyName: nom, email: email, address: loc, phone: tel };
+        localStorage.setItem('invoiceIssuerSettings', JSON.stringify(issuerData));
+
+        const senderAvatarEl = document.getElementById('invoice-sender-avatar');
+        if (senderAvatarEl && !localStorage.getItem('param_logo')) {
+          senderAvatarEl.textContent = getInitials(nom || 'Mon Entreprise');
+        }
+      }
+
       function loadInvoiceEmitter() {
         let nom = localStorage.getItem('param_nom');
         let email = localStorage.getItem('param_email');
@@ -450,10 +489,10 @@
         const senderTelEl = document.getElementById('sender-telephone');
         const senderAvatarEl = document.getElementById('invoice-sender-avatar');
 
-        if (senderNomEl) senderNomEl.textContent = (nom && nom.trim()) ? nom : 'Nom de votre entreprise';
-        if (senderEmailEl) senderEmailEl.textContent = (email && email.trim()) ? email : 'contact@votre-entreprise.com';
-        if (senderLocEl) senderLocEl.textContent = (loc && loc.trim()) ? loc : 'Votre adresse / ville';
-        if (senderTelEl) senderTelEl.textContent = (tel && tel.trim()) ? tel : '+226 XX XX XX XX';
+        if (senderNomEl) senderNomEl.value = (nom && nom.trim()) ? nom : '';
+        if (senderEmailEl) senderEmailEl.value = (email && email.trim()) ? email : '';
+        if (senderLocEl) senderLocEl.value = (loc && loc.trim()) ? loc : '';
+        if (senderTelEl) senderTelEl.value = (tel && tel.trim()) ? tel : '';
 
         if (senderAvatarEl) {
           if (logo) {
